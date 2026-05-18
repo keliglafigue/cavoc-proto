@@ -2,13 +2,11 @@
 
 type var_ctx = (Syntax.id, Types.typ) Util.Pmap.pmap
 type loc_ctx = (Syntax.loc, Types.typ) Util.Pmap.pmap
-type sym_ctx = (Symbolic.symbolic_id, Types.typ) Util.Pmap.pmap
 type cons_ctx = (Syntax.constructor, Types.typ) Util.Pmap.pmap
 type field_ctx = (Syntax.id, Syntax.id) Util.Pmap.pmap
 
 let empty_var_ctx = Util.Pmap.empty
 let empty_loc_ctx = Util.Pmap.empty
-let empty_sym_ctx = Util.Pmap.empty
 let empty_cons_ctx = Util.Pmap.empty
 let empty_field_ctx = Util.Pmap.empty
 
@@ -52,7 +50,6 @@ let string_of_field_ctx = Format.asprintf "%a" pp_field_ctx
 type type_ctx = {
   var_ctx: var_ctx;
   loc_ctx: loc_ctx;
-  sym_ctx: sym_ctx;
   name_ctx: Namectx.Namectx.t;
   cons_ctx: cons_ctx;
   type_env: Types.type_env;
@@ -62,15 +59,11 @@ type type_ctx = {
 let get_var_ctx type_ctx = type_ctx.var_ctx
 let get_name_ctx type_ctx = type_ctx.name_ctx
 let get_loc_ctx type_ctx = type_ctx.loc_ctx
-let get_symbolic_ctx type_ctx = type_ctx.sym_ctx
 let get_type_env type_ctx = type_ctx.type_env
 let get_field_ctx type_ctx = type_ctx.field_ctx
 
 let extend_var_ctx type_ctx var ty =
   { type_ctx with var_ctx= Util.Pmap.modadd (var, ty) type_ctx.var_ctx }
-
-let extend_symbolic_ctx type_ctx symbolic ty =
-  { type_ctx with sym_ctx= Util.Pmap.modadd (symbolic, ty) type_ctx.sym_ctx }
 
 let apply_type_subst_to_ctx tsubst =
   Util.Pmap.map_im (fun ty -> Types.apply_type_subst ty tsubst)
@@ -78,7 +71,6 @@ let apply_type_subst_to_ctx tsubst =
 let apply_type_subst type_ctx tsubst =
   let var_ctx = apply_type_subst_to_ctx tsubst type_ctx.var_ctx in
   let loc_ctx = apply_type_subst_to_ctx tsubst type_ctx.loc_ctx in
-  let sym_ctx = apply_type_subst_to_ctx tsubst type_ctx.sym_ctx in
   let name_ctx =
     Namectx.Namectx.map
       (fun ty -> Types.apply_type_subst ty tsubst)
@@ -86,13 +78,12 @@ let apply_type_subst type_ctx tsubst =
   let cons_ctx = apply_type_subst_to_ctx tsubst type_ctx.cons_ctx in
   let type_env = type_ctx.type_env in
   let field_ctx = type_ctx.field_ctx in
-  { var_ctx; loc_ctx; sym_ctx; name_ctx; cons_ctx; type_env; field_ctx }
+  { var_ctx; loc_ctx; name_ctx; cons_ctx; type_env; field_ctx }
 
 let build_type_ctx () =
   {
     var_ctx= empty_var_ctx;
     loc_ctx= empty_loc_ctx;
-    sym_ctx= empty_sym_ctx;
     name_ctx= Namectx.Namectx.empty;
     cons_ctx= empty_cons_ctx;
     type_env= Types.empty_type_env;
