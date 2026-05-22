@@ -35,10 +35,10 @@ let rec modadd (x, v) = function
   | (y, _) :: pmap when x = y -> (y, v) :: pmap
   | hd :: pmap -> hd :: modadd (x, v) pmap
 
-let rec failadd (x, v) fail_func = function
-  | [] -> [ (x, v) ]
-  | (y, _) :: _pmap when x = y -> fail_func ()
-  | hd :: pmap -> hd :: failadd (x, v) fail_func pmap
+let rec failadd (x, v) = function
+  | [] -> Some [ (x, v) ]
+  | (y, _) :: _pmap when x = y -> None
+  | hd :: pmap -> Option.bind (failadd (x, v) pmap) (fun l -> Some (hd::l))
 
 let rec string_of_pmap empty sep string_of_dom string_of_im = function
   | [] -> empty
