@@ -71,12 +71,12 @@ let rec infer_type type_ctx type_subst expr =
   | Int _ -> (TInt, type_subst)
   | Bool _ -> (TBool, type_subst)
   | Record fields ->
-      let inferance_step (type_subst, acc) (id, term) = 
+      let inference_step (type_subst, acc) (id, term) = 
         let (ty, type_subst') = infer_type type_ctx type_subst term in 
         (type_subst', Util.Pmap.add (id, ty) acc)
       in
       let (final_subst, inferred_fields) = 
-        Util.Pmap.fold inferance_step (type_subst, Util.Pmap.empty ) fields
+        Util.Pmap.fold inference_step (type_subst, Util.Pmap.empty ) fields
       in (TRecord inferred_fields, final_subst)
   | Projection (term, field_name) -> (
       let get_tid_from_field field = (
