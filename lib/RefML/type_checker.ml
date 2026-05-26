@@ -4,6 +4,10 @@ open Type_ctx
 
 exception TypingError of string
 
+let rec get_type_from_tid ty type_ctx = match ty with 
+        | TId id -> get_type_from_tid (Util.Pmap.lookup_exn id (Type_ctx.get_type_env type_ctx)) type_ctx
+        | ty -> ty
+
 let rec infer_type type_ctx type_subst expr =
   match expr with
   | Var x -> begin
@@ -97,24 +101,23 @@ let rec infer_type type_ctx type_subst expr =
         )
         end
       ) in
-      let get_type_from_fields fields field_name = 
-        match Util.Pmap.lookup field_name fields with
-        | Some ty -> ty
-        | None -> Util.Error.fail_error (
+      let get_type_from_field_name ty field_name =
+        let ty' = get_type_from_tid ty type_ctx in
+        match ty' with
+        | TRecord fields -> Util.Pmap.lookup field_name fields
+        | _ -> Util.Error.fail_error (
+            "Error typing " ^ Syntax.string_of_term (Projection (term, field_name)) ^ " : "
+            ^ Syntax.string_of_term term ^ " is not a Record type"
+        )
+      in
+      let associated_tid, type_subst = get_associated_tid term field_name in
+      let inferred_type = get_type_from_field_name associated_tid field_name in
+      match inferred_type with 
+      | Some ty -> (ty, type_subst)
+      | None -> Util.Error.fail_error (
             "Error typing " ^ Syntax.string_of_term (Projection (term, field_name)) ^ " : "
             ^ "Unbound record field " ^ Syntax.string_of_id field_name
         )
-      in
-      let rec get_type_from_tid ty field = match ty with 
-        | TId id -> get_type_from_tid (Util.Pmap.lookup_exn id (Type_ctx.get_type_env type_ctx)) field
-        | TRecord fields -> get_type_from_fields fields field
-        | _ -> Util.Error.fail_error (
-            "Error typing " ^ Syntax.string_of_term (Projection (term, field_name)) ^ " : "
-            ^ Syntax.string_of_term term ^ " is not a record type"
-        )
-      in
-      let associated_tid, type_subst = get_associated_tid term field_name in 
-      (get_type_from_tid associated_tid field_name, type_subst)
   )
   | BinaryOp (Plus, e1, e2)
   | BinaryOp (Minus, e1, e2)
