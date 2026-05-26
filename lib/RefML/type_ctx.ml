@@ -3,12 +3,12 @@
 type var_ctx = (Syntax.id, Types.typ) Util.Pmap.pmap
 type loc_ctx = (Syntax.loc, Types.typ) Util.Pmap.pmap
 type cons_ctx = (Syntax.constructor, Types.typ) Util.Pmap.pmap
-type label_ctx = (Syntax.id, Syntax.id) Util.Pmap.pmap
+type field_ctx = (Syntax.id, Syntax.id) Util.Pmap.pmap
 
 let empty_var_ctx = Util.Pmap.empty
 let empty_loc_ctx = Util.Pmap.empty
 let empty_cons_ctx = Util.Pmap.empty
-let empty_label_ctx = Util.Pmap.empty
+let empty_field_ctx = Util.Pmap.empty
 
 let pp_var_ctx fmt var_ctx =
   let pp_empty fmt () = Format.fprintf fmt "⋅" in
@@ -45,7 +45,7 @@ let cons_ctx_to_yojson cons_ctx =
 let string_of_var_ctx = Format.asprintf "%a" pp_var_ctx
 let string_of_loc_ctx = Format.asprintf "%a" pp_loc_ctx
 let string_of_cons_ctx = Format.asprintf "%a" pp_cons_ctx
-let string_of_label_ctx = Format.asprintf "%a" pp_label_ctx
+let string_of_field_ctx = Format.asprintf "%a" pp_label_ctx
 
 type type_ctx = {
   var_ctx: var_ctx;
@@ -53,14 +53,14 @@ type type_ctx = {
   name_ctx: Namectx.Namectx.t;
   cons_ctx: cons_ctx;
   type_env: Types.type_env;
-  label_ctx: label_ctx;
+  field_ctx: field_ctx;
 }
 
 let get_var_ctx type_ctx = type_ctx.var_ctx
 let get_name_ctx type_ctx = type_ctx.name_ctx
 let get_loc_ctx type_ctx = type_ctx.loc_ctx
 let get_type_env type_ctx = type_ctx.type_env
-let get_label_ctx type_ctx = type_ctx.label_ctx
+let get_field_ctx type_ctx = type_ctx.field_ctx
 
 let extend_var_ctx type_ctx var ty =
   { type_ctx with var_ctx= Util.Pmap.modadd (var, ty) type_ctx.var_ctx }
@@ -77,8 +77,8 @@ let apply_type_subst type_ctx tsubst =
       type_ctx.name_ctx in
   let cons_ctx = apply_type_subst_to_ctx tsubst type_ctx.cons_ctx in
   let type_env = type_ctx.type_env in
-  let label_ctx = type_ctx.label_ctx in
-  { var_ctx; loc_ctx; name_ctx; cons_ctx; type_env; label_ctx }
+  let field_ctx = type_ctx.field_ctx in
+  { var_ctx; loc_ctx; name_ctx; cons_ctx; type_env; field_ctx }
 
 let build_type_ctx _expr =
   {
@@ -87,5 +87,5 @@ let build_type_ctx _expr =
     name_ctx= Namectx.Namectx.empty;
     cons_ctx= empty_cons_ctx;
     type_env= Types.empty_type_env;
-    label_ctx = empty_label_ctx;
+    field_ctx = empty_field_ctx;
   }

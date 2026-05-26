@@ -186,7 +186,7 @@ let create_label_ctx type_decl_l =
   let rec aux l label_ctx = match l with
     | [] -> label_ctx
     | elt::l' -> aux l' (update_label_ctx label_ctx elt)
-  in aux type_decl_l Type_ctx.empty_label_ctx
+  in aux type_decl_l Type_ctx.empty_field_ctx
 
 let get_typed_comp_env implem_decl_l sign_decl_l =
   let (comp_decl_l, implem_type_decl_l, implem_exn_l) =
@@ -194,7 +194,7 @@ let get_typed_comp_env implem_decl_l sign_decl_l =
   let (var_decl_l, type_priv_decl_l, type_publ_decl_l, sign_exn_l) =
     split_signature_decl_list sign_decl_l in
   let type_env = Util.Pmap.list_to_pmap implem_type_decl_l in
-  let label_ctx = create_label_ctx implem_type_decl_l in
+  let field_ctx = create_label_ctx implem_type_decl_l in
   let cons_ctx = Util.Pmap.list_to_pmap implem_exn_l in
   var_decl_included comp_decl_l var_decl_l;
   type_priv_included type_env type_priv_decl_l;
@@ -210,7 +210,7 @@ let get_typed_comp_env implem_decl_l sign_decl_l =
       name_ctx= name_ctxO;
       cons_ctx;
       type_env;
-      label_ctx;
+      field_ctx;
     } in
   let (comp_env, name_ctxO') = typing_decl_l type_ctx var_decls comp_decl_l in
   (comp_env, name_ctxO', cons_ctx)
