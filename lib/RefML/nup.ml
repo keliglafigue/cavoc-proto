@@ -123,6 +123,17 @@ module Make (BranchMonad : Util.Monad.BRANCH) :
                 return (Constructor (c, nup), lnamectx')
             | _ -> failwith "TODO"
           end
+      | TRecord fields -> (
+        let instantiate_field m (field_name, ty) = 
+          let* (current_fields, current_lnamectx) = m in
+          let* (nup, new_lnamectx) = aux current_lnamectx ty in
+          let new_fields = Util.Pmap.add (field_name, nup) current_fields in
+          return (new_fields, new_lnamectx)
+        in
+        let* (instance_fields, new_namectx) = 
+          Util.Pmap.fold instantiate_field (return (Util.Pmap.empty, lnamectx)) fields in
+        return (Record instance_fields, new_namectx)
+      )
       | ty ->
           failwith
             ("Error generating a nup on type " ^ Types.string_of_typ ty
@@ -146,6 +157,14 @@ module Make (BranchMonad : Util.Monad.BRANCH) :
           aux ty2 (nup2, lnamectx')
         end
       | (TProd _, _) -> None
+      | (TRecord ty_fields, Record val_fields) -> 
+        let check_on_field lnamectx_m (field_name, ty) =
+          let* current_lnamectx = lnamectx_m in
+          let associated_val = Util.Pmap.lookup_exn field_name val_fields in
+          aux ty (associated_val, current_lnamectx)
+        in
+        Util.Pmap.fold check_on_field (Some lnamectx) ty_fields 
+      | (TRecord _, _) -> None 
       | (TArrow _, Name nn) | (TForall _, Name nn) ->
           let nty = Types.force_negative_type ty in
           Namectx.Namectx.is_last lnamectx nn nty
@@ -171,7 +190,7 @@ module Make (BranchMonad : Util.Monad.BRANCH) :
       | (TUndef, _) | (TRef _, _) | (TSum _, _) | (TExn, _) ->
           failwith @@ "Error: type-checking a nup of type "
           ^ Types.string_of_typ ty ^ " is not yet supported."
-      | (TRecord _, _) -> failwith "Record not yet implemented (type_check_abstract_val)" in
+    in
     match aux ty (nup, lnamectx) with
     | None -> false
     | Some lnamectx when Namectx.Namectx.is_empty lnamectx -> true
@@ -204,6 +223,15 @@ module Make (BranchMonad : Util.Monad.BRANCH) :
         end
       | (Name _, TName _) -> (value, ienv)
       | (Constructor _, TExn) -> (value, ienv)
+      | (Record val_fields, TRecord ty_fields) -> 
+          let abstracting_field (new_fields, current_ienv) (field_name, expr) =
+            let associated_ty = Util.Pmap.lookup_exn field_name ty_fields in
+            let (nup, ienv') = aux current_ienv expr associated_ty in
+            (Util.Pmap.add (field_name, nup) new_fields, ienv')
+          in
+          let (new_fields, ienv') = 
+            Util.Pmap.fold abstracting_field (Util.Pmap.empty, ienv) val_fields in
+          (Record new_fields, ienv')
       | _ ->
           failwith
             ("Error: " ^ string_of_term value ^ " of type " ^ string_of_typ ty

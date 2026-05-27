@@ -240,6 +240,22 @@ let interpreter interpreter (expr, store) =
             aux handler_l
         | _ -> return (TryWith (nf, handler_l), store')
       end
+  | Record fields -> (
+    let reconstruct_fields m (id, expr) =
+      let* (new_fields, current_store) = m in
+      let* (expr', store') = interpreter (expr, current_store) in
+      return (Util.Pmap.add (id, expr') new_fields, store')
+    in
+    let* (reconstructed_fields, new_store) = 
+      Util.Pmap.fold reconstruct_fields (return (Util.Pmap.empty, store)) fields in
+    return (Record reconstructed_fields, new_store)
+  )
+  | Projection (expr, id) -> (
+    let* (nv, store') = interpreter (expr, store) in
+    match nv with
+    | Record fields -> return (Util.Pmap.lookup_exn id fields, store')
+    | _ -> return (Projection (nv, id), store')
+  )
   | _ ->
       failwith
         ("Error: " ^ Syntax.string_of_term expr

@@ -182,6 +182,7 @@ let empty_name_set = []
 let rec get_new_names lnames = function
   | Name nn -> if List.mem nn lnames then lnames else nn :: lnames
   | Var _ | Loc _ | Unit | Int _ | Bool _ | Hole | Error -> lnames
+  | Projection (e, _)
   | Constructor (_, e)
   | UnaryOp (_, e)
   | Fun (_, e)
@@ -210,8 +211,9 @@ let rec get_new_names lnames = function
       List.fold_left
         (fun lnames (Handler (_, expr)) -> get_new_names lnames expr)
         lnames' handler_l
-  | Record _ -> failwith "Record not yet implemented (get_new_names)"
-  | Projection _ -> failwith "Projection not yet implemented (get_new_names)"
+  | Record fields -> 
+    let aux current_lnames (_, e) = get_new_names current_lnames e in
+    Util.Pmap.fold aux lnames fields
 
 let get_names = get_new_names empty_name_set
 
@@ -224,6 +226,7 @@ let rec get_new_labels label_l = function
   | Constructor (c, _) ->
       if List.mem (ConsL c) label_l then label_l else ConsL c :: label_l
   | Name _ | Var _ | Unit | Int _ | Bool _ | Hole | Error -> label_l
+  | Projection (e, _)
   | UnaryOp (_, e)
   | Fun (_, e)
   | Fix (_, _, e)
@@ -251,8 +254,9 @@ let rec get_new_labels label_l = function
       List.fold_left
         (fun label_l (Handler (_, expr)) -> get_new_labels label_l expr)
         label_l' handler_l
-  | Record _ -> failwith "Record not yet implemented (get_new_labels)"
-  | Projection _ -> failwith "Projection not yet implemented (get_new_labels)"
+  | Record fields -> 
+    let aux current_label_l (_, e) = get_new_labels current_label_l e in
+    Util.Pmap.fold aux label_l fields
 
 let get_labels = get_new_labels empty_label_set
 
@@ -274,6 +278,10 @@ let rec isval = function
   | Fix _ -> true
   | Fun _ -> true
   | Pair (e1, e2) -> isval e1 && isval e2
+  | Record fields -> (
+    let aux value (_, expr) = value && (isval expr) in
+    Util.Pmap.fold aux true fields 
+  )
   | _ -> false
 
 let get_value expr = if isval expr then Some expr else None
@@ -333,8 +341,12 @@ let rec subst expr value value' =
             Handler (pat, subst expr_pat value value')
         | PatVar _ -> Handler (pat, expr_pat) in
       TryWith (expr', List.map aux handler_l)
-  | Record _ -> failwith "Record not yet implemented (subst)"
-  | Projection _ -> failwith "Projection not yet implemented (subst)"
+  | Record fields -> (
+    let reconstruct_fields reconstructed_fields (id, expr) = 
+      Util.Pmap.add (id, subst expr value value') reconstructed_fields 
+    in Record (Util.Pmap.fold reconstruct_fields Util.Pmap.empty fields)
+  )
+  | Projection (expr, id) -> Projection (subst expr value value', id)
 
 let subst_var expr id = subst expr (Var id)
 
@@ -375,8 +387,12 @@ let rec rename expr renam =
         | PatCons _ -> Handler (pat, rename expr_pat renam)
         | PatVar _id -> Handler (pat, rename expr_pat renam) in
       TryWith (expr', List.map aux handler_l)
-  | Record _ -> failwith "Record not yet implemented (rename)"
-  | Projection _ -> failwith "Projection not yet implemented (rename)"
+  | Record fields -> (
+    let reconstruct_fields reconstructed_fields (field, expr) = 
+      Util.Pmap.add (field, rename expr renam) reconstructed_fields
+    in Record (Util.Pmap.fold reconstruct_fields Util.Pmap.empty fields)
+  )
+  | Projection (expr, id) -> Projection (rename expr renam, id)
 (* Auxiliary functions *)
 
 let implement_arith_op = function
@@ -456,6 +472,7 @@ let rec extract_ctx expr =
   match expr with
   | Name _ | Loc _ | Unit | Int _ | Bool _ | Fix _ | Fun _ | Error ->
       (expr, Hole)
+  | Projection (term, id) -> extract_ctx_un (fun x -> Projection (x, id)) term
   | BinaryOp (_, expr1, expr2)
   | App (expr1, expr2)
   | Pair (expr1, expr2)
@@ -483,8 +500,7 @@ let rec extract_ctx expr =
       failwith
         ("Error: trying to extract an evaluation context from "
        ^ string_of_term expr ^ ". Please report.")
-  | Record _ -> failwith "Record not yet implemented (extract_ctx)"
-  | Projection _ -> failwith "Projection not yet implemented (extract_ctx)"
+  | Record fields -> extract_ctx_record [] (Util.Pmap.to_list fields)
 
 and extract_ctx_bin cons_op expr1 expr2 =
   match (isval expr1, isval expr2) with
@@ -502,6 +518,17 @@ and extract_ctx_un cons_op expr =
     let (result, ctx) = extract_ctx expr in
     (result, cons_op ctx)
 
+and extract_ctx_record verified untreated = 
+  (* Let me be clear, this is HORRENDOUS *)
+  (* But it works (afaik) ! So I guess there's that too *)
+  match untreated with
+  | [] -> (Record (Util.Pmap.list_to_pmap verified), Hole)
+  | (label, expr)::rest -> (
+    if isval expr then extract_ctx_record ((label, expr)::verified) rest
+    else 
+      let (res, ctx) = extract_ctx expr in
+      (res, Record (Util.Pmap.list_to_pmap (verified@((label, ctx) :: rest)))  )
+  )
 let fill_hole ctx expr = subst ctx Hole expr
 
 type negative_val = value [@@deriving to_yojson]
