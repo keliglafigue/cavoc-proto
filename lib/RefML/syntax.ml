@@ -65,6 +65,8 @@ and term =
   | Unit
   | Int of int
   | Bool of bool
+  | Record of (id, term) Util.Pmap.pmap
+  | Projection of (term * id)
   | BinaryOp of binary_op * term * term
   | UnaryOp of unary_op * term
   | If of term * term * term
@@ -158,6 +160,12 @@ and pp_term fmt = function
       Format.fprintf fmt "try %a with %a" pp_term e pp_handler_l handler_l
   | Hole -> Format.pp_print_string fmt "∙"
   | Error -> Format.pp_print_string fmt "error"
+  | Record elt -> (
+    Format.pp_print_string fmt "{ ";
+    Util.Pmap.iter (fun (id, term) -> Format.fprintf fmt "%s = %a; " id pp_term term) elt;
+    Format.pp_print_string fmt "}";
+  )
+  | Projection (e, v) -> Format.fprintf fmt "%a.%s" pp_par_term e v
 
 and pp_handler fmt (Handler (pat, expr)) =
   Format.fprintf fmt "%a -> %a" pp_pattern pat pp_term expr
@@ -174,6 +182,7 @@ let empty_name_set = []
 let rec get_new_names lnames = function
   | Name nn -> if List.mem nn lnames then lnames else nn :: lnames
   | Var _ | Loc _ | Unit | Int _ | Bool _ | Hole | Error -> lnames
+  | Projection (e, _)
   | Constructor (_, e)
   | UnaryOp (_, e)
   | Fun (_, e)
@@ -202,6 +211,9 @@ let rec get_new_names lnames = function
       List.fold_left
         (fun lnames (Handler (_, expr)) -> get_new_names lnames expr)
         lnames' handler_l
+  | Record fields -> 
+    let aux current_lnames (_, e) = get_new_names current_lnames e in
+    Util.Pmap.fold aux lnames fields
 
 let get_names = get_new_names empty_name_set
 
@@ -214,6 +226,7 @@ let rec get_new_labels label_l = function
   | Constructor (c, _) ->
       if List.mem (ConsL c) label_l then label_l else ConsL c :: label_l
   | Name _ | Var _ | Unit | Int _ | Bool _ | Hole | Error -> label_l
+  | Projection (e, _)
   | UnaryOp (_, e)
   | Fun (_, e)
   | Fix (_, _, e)
@@ -241,6 +254,9 @@ let rec get_new_labels label_l = function
       List.fold_left
         (fun label_l (Handler (_, expr)) -> get_new_labels label_l expr)
         label_l' handler_l
+  | Record fields -> 
+    let aux current_label_l (_, e) = get_new_labels current_label_l e in
+    Util.Pmap.fold aux label_l fields
 
 let get_labels = get_new_labels empty_label_set
 
@@ -262,6 +278,10 @@ let rec isval = function
   | Fix _ -> true
   | Fun _ -> true
   | Pair (e1, e2) -> isval e1 && isval e2
+  | Record fields -> (
+    let aux value (_, expr) = value && (isval expr) in
+    Util.Pmap.fold aux true fields 
+  )
   | _ -> false
 
 let get_value expr = if isval expr then Some expr else None
@@ -321,6 +341,12 @@ let rec subst expr value value' =
             Handler (pat, subst expr_pat value value')
         | PatVar _ -> Handler (pat, expr_pat) in
       TryWith (expr', List.map aux handler_l)
+  | Record fields -> (
+    let reconstruct_fields reconstructed_fields (id, expr) = 
+      Util.Pmap.add (id, subst expr value value') reconstructed_fields 
+    in Record (Util.Pmap.fold reconstruct_fields Util.Pmap.empty fields)
+  )
+  | Projection (expr, id) -> Projection (subst expr value value', id)
 
 let subst_var expr id = subst expr (Var id)
 
@@ -361,6 +387,12 @@ let rec rename expr renam =
         | PatCons _ -> Handler (pat, rename expr_pat renam)
         | PatVar _id -> Handler (pat, rename expr_pat renam) in
       TryWith (expr', List.map aux handler_l)
+  | Record fields -> (
+    let reconstruct_fields reconstructed_fields (field, expr) = 
+      Util.Pmap.add (field, rename expr renam) reconstructed_fields
+    in Record (Util.Pmap.fold reconstruct_fields Util.Pmap.empty fields)
+  )
+  | Projection (expr, id) -> Projection (rename expr renam, id)
 (* Auxiliary functions *)
 
 let implement_arith_op = function
@@ -440,6 +472,7 @@ let rec extract_ctx expr =
   match expr with
   | Name _ | Loc _ | Unit | Int _ | Bool _ | Fix _ | Fun _ | Error ->
       (expr, Hole)
+  | Projection (term, id) -> extract_ctx_un (fun x -> Projection (x, id)) term
   | BinaryOp (_, expr1, expr2)
   | App (expr1, expr2)
   | Pair (expr1, expr2)
@@ -467,6 +500,23 @@ let rec extract_ctx expr =
       failwith
         ("Error: trying to extract an evaluation context from "
        ^ string_of_term expr ^ ". Please report.")
+  | Record fields -> (
+    let find_non_value found_val (field_name, expr) =
+      match found_val with
+      | Some _ -> found_val
+      | None -> 
+          if isval expr then None
+          else 
+            let (res, ctx) = extract_ctx expr in
+            Some (res, field_name, ctx)
+    in
+    let first_non_val = Util.Pmap.fold find_non_value None fields in
+    match first_non_val with 
+    | None -> (Record fields, Hole)
+    | Some (res, field_name, ctx) ->
+        let updated_fields = Util.Pmap.modadd (field_name, ctx) fields in
+        (res, Record updated_fields)
+  )
 
 and extract_ctx_bin cons_op expr1 expr2 =
   match (isval expr1, isval expr2) with

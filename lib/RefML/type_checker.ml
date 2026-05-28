@@ -4,6 +4,10 @@ open Type_ctx
 
 exception TypingError of string
 
+let rec get_type_from_tid ty type_ctx = match ty with 
+        | TId id -> get_type_from_tid (Util.Pmap.lookup_exn id (Type_ctx.get_type_env type_ctx)) type_ctx
+        | ty -> ty
+
 let rec infer_type type_ctx type_subst expr =
   match expr with
   | Var x -> begin
@@ -66,6 +70,55 @@ let rec infer_type type_ctx type_subst expr =
   | Unit -> (TUnit, type_subst)
   | Int _ -> (TInt, type_subst)
   | Bool _ -> (TBool, type_subst)
+  | Record fields ->
+      let inference_step (type_subst, acc) (id, term) = 
+        let (ty, type_subst') = infer_type type_ctx type_subst term in 
+        (type_subst', Util.Pmap.add (id, ty) acc)
+      in
+      let (final_subst, inferred_fields) = 
+        Util.Pmap.fold inference_step (type_subst, Util.Pmap.empty ) fields
+      in (TRecord inferred_fields, final_subst)
+  | Projection (term, field_name) -> (
+      let get_tid_from_field field = (
+        let id_ref = Util.Pmap.lookup field (Type_ctx.get_field_ctx type_ctx) in
+        match id_ref with 
+        | Some type_id -> Types.TId type_id
+        | None -> Util.Error.fail_error (
+            "Error typing " ^ Syntax.string_of_term (Projection (term, field_name)) ^ " : "
+            ^ "Unbound record field " ^ Syntax.string_of_id field
+        )
+      ) in
+      let get_associated_tid term id = (
+        let rty, type_subst' = infer_type type_ctx type_subst term in 
+        let rty' = Types.apply_type_subst rty type_subst' in 
+        let associated_tid = get_tid_from_field id in
+        (* Ensure that the infered field type correspond to the declared type in signature *)
+        begin match mgu_type (Type_ctx.get_type_env type_ctx) (rty', associated_tid) with
+        | Some type_subst'' -> (associated_tid, compose_type_subst type_subst'' type_subst')
+        | None -> Util.Error.fail_error (
+            "Error typing " ^ Syntax.string_of_term (Projection (term, id)) ^ " : "
+            ^ "Unbound record field " ^ Syntax.string_of_id id
+        )
+        end
+      ) in
+      let get_type_from_field_name ty field_name =
+        let ty' = get_type_from_tid ty type_ctx in
+        match ty' with
+        | TRecord fields -> Util.Pmap.lookup field_name fields
+        | _ -> Util.Error.fail_error (
+            "Error typing " ^ Syntax.string_of_term (Projection (term, field_name)) ^ " : "
+            ^ Syntax.string_of_term term ^ " is not a Record type"
+        )
+      in
+      let associated_tid, type_subst = get_associated_tid term field_name in
+      let inferred_type = get_type_from_field_name associated_tid field_name in
+      match inferred_type with 
+      | Some ty -> (ty, type_subst)
+      | None -> Util.Error.fail_error (
+            "Error typing " ^ Syntax.string_of_term (Projection (term, field_name)) ^ " : "
+            ^ "Unbound record field " ^ Syntax.string_of_id field_name
+        )
+  )
   | BinaryOp (Plus, e1, e2)
   | BinaryOp (Minus, e1, e2)
   | BinaryOp (Mult, e1, e2)
@@ -299,7 +352,6 @@ let rec infer_type type_ctx type_subst expr =
   | Error ->
       let tvar = fresh_typevar () in
       (tvar, type_subst)
-
 and check_type type_ctx type_subst expr res_ty =
   let (ty, type_subst') = infer_type type_ctx type_subst expr in
   let ty_inst = Types.apply_type_subst ty type_subst' in

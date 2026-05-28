@@ -167,12 +167,34 @@ let typing_decl_l type_ctx var_decls comp_decl_l =
       end in
   aux [] type_ctx comp_decl_l
 
+let update_field_ctx field_ctx (newTId, ty) =
+  let add_new_field field_ctx (field_name, _ty) = 
+    match Util.Pmap.failadd (field_name, newTId) field_ctx with 
+    | Some field_ctx' -> field_ctx'
+    | None -> Util.Error.fail_error "Records cannot have similarly named field"
+  in
+  let accumulate_fields fields = Util.Pmap.fold add_new_field field_ctx fields in
+  (* Tried to handle type aliasing but this is not enough (does not support type b = a;; type b = int) *)
+  (* let replace_tid field_ctx oldTId newTid = 
+    Util.Pmap.map_im (fun currentId -> if currentId = oldTId then newTid else oldTId) field_ctx in *)
+  match ty with
+  | Types.TRecord fields -> accumulate_fields fields
+  (* | Types.TId oldTId -> replace_tid field_ctx oldTId newTId *)
+  | _ -> field_ctx
+
+let create_field_ctx type_decl_l = 
+  let rec aux l field_ctx = match l with
+    | [] -> field_ctx
+    | elt::l' -> aux l' (update_field_ctx field_ctx elt)
+  in aux type_decl_l Type_ctx.empty_field_ctx
+
 let get_typed_comp_env implem_decl_l sign_decl_l =
   let (comp_decl_l, implem_type_decl_l, implem_exn_l) =
     split_implem_decl_list implem_decl_l in
   let (var_decl_l, type_priv_decl_l, type_publ_decl_l, sign_exn_l) =
     split_signature_decl_list sign_decl_l in
   let type_env = Util.Pmap.list_to_pmap implem_type_decl_l in
+  let field_ctx = create_field_ctx implem_type_decl_l in
   let cons_ctx = Util.Pmap.list_to_pmap implem_exn_l in
   var_decl_included comp_decl_l var_decl_l;
   type_priv_included type_env type_priv_decl_l;
@@ -188,6 +210,7 @@ let get_typed_comp_env implem_decl_l sign_decl_l =
       name_ctx= name_ctxO;
       cons_ctx;
       type_env;
+      field_ctx;
     } in
   let (comp_env, name_ctxO') = typing_decl_l type_ctx var_decls comp_decl_l in
   (comp_env, name_ctxO', cons_ctx)
