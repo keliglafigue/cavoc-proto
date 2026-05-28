@@ -500,7 +500,23 @@ let rec extract_ctx expr =
       failwith
         ("Error: trying to extract an evaluation context from "
        ^ string_of_term expr ^ ". Please report.")
-  | Record fields -> extract_ctx_record [] (Util.Pmap.to_list fields)
+  | Record fields -> (
+    let find_non_value found_val (field_name, expr) =
+      match found_val with
+      | Some _ -> found_val
+      | None -> 
+          if isval expr then None
+          else 
+            let (res, ctx) = extract_ctx expr in
+            Some (res, field_name, ctx)
+    in
+    let first_non_val = Util.Pmap.fold find_non_value None fields in
+    match first_non_val with 
+    | None -> (Record fields, Hole)
+    | Some (res, field_name, ctx) ->
+        let updated_fields = Util.Pmap.modadd (field_name, ctx) fields in
+        (res, Record updated_fields)
+  )
 
 and extract_ctx_bin cons_op expr1 expr2 =
   match (isval expr1, isval expr2) with
@@ -518,17 +534,6 @@ and extract_ctx_un cons_op expr =
     let (result, ctx) = extract_ctx expr in
     (result, cons_op ctx)
 
-and extract_ctx_record verified untreated = 
-  (* Let me be clear, this is HORRENDOUS *)
-  (* But it works (afaik) ! So I guess there's that too *)
-  match untreated with
-  | [] -> (Record (Util.Pmap.list_to_pmap verified), Hole)
-  | (label, expr)::rest -> (
-    if isval expr then extract_ctx_record ((label, expr)::verified) rest
-    else 
-      let (res, ctx) = extract_ctx expr in
-      (res, Record (Util.Pmap.list_to_pmap (verified@((label, ctx) :: rest)))  )
-  )
 let fill_hole ctx expr = subst ctx Hole expr
 
 type negative_val = value [@@deriving to_yojson]
