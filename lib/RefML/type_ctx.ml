@@ -28,10 +28,10 @@ let pp_cons_ctx fmt cons_ctx =
     Format.fprintf fmt "%a : %a" Syntax.pp_constructor c Types.pp_typ ty in
   Util.Pmap.pp_pmap ~pp_empty pp_pair fmt cons_ctx
 
-let pp_label_ctx fmt var_ctx =
+let pp_field_ctx fmt var_ctx =
   let pp_empty fmt () = Format.fprintf fmt "⋅" in
-  let pp_pair fmt (label, id) =
-    Format.fprintf fmt "%a : %a" Syntax.pp_id label Syntax.pp_id id in
+  let pp_pair fmt (field_name, id) =
+    Format.fprintf fmt "%a : %a" Syntax.pp_id field_name Syntax.pp_id id in
   Util.Pmap.pp_pmap ~pp_empty pp_pair fmt var_ctx
 
 let cons_ctx_to_yojson cons_ctx =
@@ -45,7 +45,7 @@ let cons_ctx_to_yojson cons_ctx =
 let string_of_var_ctx = Format.asprintf "%a" pp_var_ctx
 let string_of_loc_ctx = Format.asprintf "%a" pp_loc_ctx
 let string_of_cons_ctx = Format.asprintf "%a" pp_cons_ctx
-let string_of_field_ctx = Format.asprintf "%a" pp_label_ctx
+let string_of_field_ctx = Format.asprintf "%a" pp_field_ctx
 
 type type_ctx = {
   var_ctx: var_ctx;

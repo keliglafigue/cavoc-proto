@@ -21,7 +21,7 @@ val get_field_ctx : type_ctx -> field_ctx
 val pp_var_ctx : Format.formatter -> var_ctx -> unit
 val pp_loc_ctx : Format.formatter -> loc_ctx -> unit
 val pp_cons_ctx : Format.formatter -> cons_ctx -> unit
-val pp_label_ctx : Format.formatter -> field_ctx -> unit
+val pp_field_ctx : Format.formatter -> field_ctx -> unit
 val string_of_var_ctx : var_ctx -> string
 val string_of_loc_ctx : loc_ctx -> string
 val string_of_cons_ctx : cons_ctx -> string
