@@ -32,7 +32,7 @@ let () =
   let store, type_ctx = List.fold_left
     register_symbolic (store, type_ctx) symbolic_names in
 
-  (* This raises an exception if expr is ill-typed *) 
+  (* This raises an exception if expr isn't well typed *) 
   let _, _ = Type_checker.typing_expr type_ctx expr in
   
   let pp_opconf fmt (expr, store) =
