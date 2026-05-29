@@ -33,7 +33,6 @@ module MakeStore (BranchMonad : Util.Monad.BRANCH) :
     with type store = Store.store
      and type label = Syntax.label
      and type Storectx.t = Store.Storectx.t
-     and type location = Store.location
      and module BranchMonad = BranchMonad = struct
       include Store_gen.Make (BranchMonad)
     end

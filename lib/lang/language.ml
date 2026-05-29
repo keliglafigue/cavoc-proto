@@ -19,21 +19,19 @@ end
 
 module type STORE = sig
   type store [@@deriving to_yojson]
-  type location
+  type label
 
   val string_of_store : store -> string
   val pp_store : Format.formatter -> store -> unit
   val empty_store : store
 
-  module Storectx : Typectx.TYPECTX with type Names.name = location
+  module Storectx : Typectx.TYPECTX with type Names.name = label
 
   val infer_type_store : store -> Storectx.t
 
   (* update_store μ μ' is equal to μ[μ'] *)
   val update_store : store -> store -> store
   val restrict : Storectx.t -> store -> store
-
-  type label
 
   val restrict_ctx : Storectx.t -> label list -> Storectx.t
 

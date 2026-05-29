@@ -1,7 +1,4 @@
-type location =
-  | Loc of Syntax.loc
-  | Sym of Symbolic.id
-  | Cons of Syntax.constructor [@@deriving to_yojson]
+type label = Syntax.label
 
 type store =
   { valenv : Syntax.val_env
@@ -65,18 +62,20 @@ module Storectx = struct
   (* TODO: This should really be a record *)
   type t = Type_ctx.loc_ctx * Symbolic.symbolic_ctx * Type_ctx.cons_ctx
 
+  open Syntax
+
   module Names = struct
-    type name = location [@@deriving to_yojson]
+    type name = Syntax.label [@@deriving to_yojson]
 
     let pp_name fmt = function
-      | Loc l -> Syntax.pp_loc fmt l
-      | Sym id -> Symbolic.pp_id fmt id
-      | Cons c -> Syntax.pp_constructor fmt c
+      | LocL l -> Syntax.pp_loc fmt l
+      | SymL id -> Symbolic.pp_id fmt id
+      | ConsL c -> Syntax.pp_constructor fmt c
 
     let string_of_name = function
-      | Loc l -> Syntax.string_of_loc l
-      | Sym id -> Symbolic.string_of_id id
-      | Cons c -> Syntax.string_of_constructor c
+      | LocL l -> Syntax.string_of_loc l
+      | SymL id -> Symbolic.string_of_id id
+      | ConsL c -> Syntax.string_of_constructor c
 
     let is_callable _ = false
     let is_cname _ = false
@@ -123,35 +122,35 @@ module Storectx = struct
     (loc_ctx, symbolic_ctx, cons_ctx)
 
   let get_names (loc_ctx, symbolic_ctx, cons_ctx) =
-    let loc_l = List.map (fun l -> Loc l) (Util.Pmap.dom loc_ctx) in
-    let sym_l = List.map (fun (id, _) -> Sym id) symbolic_ctx in
-    let cons_l = List.map (fun c -> Cons c) (Util.Pmap.dom cons_ctx) in
+    let loc_l = List.map (fun l -> LocL l) (Util.Pmap.dom loc_ctx) in
+    let sym_l = List.map (fun (id, _) -> SymL id) symbolic_ctx in
+    let cons_l = List.map (fun c -> ConsL c) (Util.Pmap.dom cons_ctx) in
     loc_l @ sym_l @ cons_l
 
-  let lookup_exn ((loc_ctx, symbolic_ctx, cons_ctx) : t) (loc : location) =
+  let lookup_exn ((loc_ctx, symbolic_ctx, cons_ctx) : t) (loc : label) =
     match loc with
-    | Loc l -> Util.Pmap.lookup_exn l loc_ctx
-    | Sym id -> List.assoc id symbolic_ctx
-    | Cons c -> Util.Pmap.lookup_exn c cons_ctx
+    | LocL l -> Util.Pmap.lookup_exn l loc_ctx
+    | SymL id -> List.assoc id symbolic_ctx
+    | ConsL c -> Util.Pmap.lookup_exn c cons_ctx
 
   let is_empty ((loc_ctx, symbolic_ctx, cons_ctx) : t) =
     Util.Pmap.is_empty loc_ctx
     && List.is_empty symbolic_ctx
     && Util.Pmap.is_empty cons_ctx
 
-  let is_singleton ((loc_ctx, symbolic_ctx, cons_ctx) : t) (loc : location) (ty : typ) =
+  let is_singleton ((loc_ctx, symbolic_ctx, cons_ctx) : t) (loc : label) (ty : typ) =
     match loc with
-    | Loc l -> Util.Pmap.is_singleton loc_ctx (l, ty)
-    | Sym id -> symbolic_ctx = [ id, ty ]
-    | Cons c -> Util.Pmap.is_singleton cons_ctx (c, ty)
+    | LocL l -> Util.Pmap.is_singleton loc_ctx (l, ty)
+    | SymL id -> symbolic_ctx = [ id, ty ]
+    | ConsL c -> Util.Pmap.is_singleton cons_ctx (c, ty)
 
-  let is_last ((_loc_ctx, _symbolic_ctx, _cons_ctx) : t) (_loc : location) (_ty : typ) =
+  let is_last ((_loc_ctx, _symbolic_ctx, _cons_ctx) : t) (_loc : label) (_ty : typ) =
     failwith "TODO"
 
   let to_pmap ((loc_ctx, symbolic_ctx, cons_ctx) : t) =
-    let loc_ctx' = Util.Pmap.map_dom (fun l -> Loc l) loc_ctx in
-    let symbolic_ctx' = Util.Pmap.list_to_pmap (List.map (fun (id, ty) -> (Sym id, ty)) symbolic_ctx) in
-    let cons_ctx' = Util.Pmap.map_dom (fun c -> Cons c) cons_ctx in
+    let loc_ctx' = Util.Pmap.map_dom (fun l -> LocL l) loc_ctx in
+    let symbolic_ctx' = Util.Pmap.list_to_pmap (List.map (fun (id, ty) -> (SymL id, ty)) symbolic_ctx) in
+    let cons_ctx' = Util.Pmap.map_dom (fun c -> ConsL c) cons_ctx in
     Util.Pmap.concat (Util.Pmap.concat loc_ctx'  symbolic_ctx') cons_ctx'
 
   let singleton _ =
@@ -185,8 +184,6 @@ let restrict (loc_ctx, symbolic_ctx, cons_ctx) store =
   let heap = Heap.restrict loc_ctx store.heap in
   let symbolic_ctx = { Symbolic.empty with pathdecl = symbolic_ctx } in
   { empty_store with heap ; symbolic_ctx ; cons_ctx }
-
-type label = Syntax.label
 
 let restrict_ctx (loc_ctx, symbolic_ctx, cons_ctx) label_l =
   let loc_ctx' =

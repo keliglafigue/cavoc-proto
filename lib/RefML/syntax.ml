@@ -23,7 +23,7 @@ let fresh_loc () =
   count_loc := !count_loc + 1;
   l
 
-type label = LocL of loc | ConsL of constructor
+type label = LocL of loc | ConsL of constructor | SymL of Symbolic.id [@@deriving to_yojson]
 
 (* we also provide fresh generation of variable identifiers,
    that is used in the parser to replace some anonymous construction like () or _ *)

@@ -1,4 +1,4 @@
-type location
+type label = Syntax.label
 
 type store =
   { valenv : Syntax.val_env
@@ -28,14 +28,12 @@ val embed_cons_ctx : Type_ctx.cons_ctx -> store
 module Storectx : Lang.Typectx.TYPECTX
   with type t = Type_ctx.loc_ctx * Symbolic.symbolic_ctx * Type_ctx.cons_ctx
   and type typ = Types.typ
-  and type Names.name = location
+  and type Names.name = label
 
 val infer_type_store : store -> Storectx.t
 
 (* update_store (env,h) (env',h') is equal to (env,h[h']) *)
 val update_store : store -> store -> store
 val restrict : Storectx.t -> store -> store
-
-type label = Syntax.label
 
 val restrict_ctx : Storectx.t -> label list -> Storectx.t

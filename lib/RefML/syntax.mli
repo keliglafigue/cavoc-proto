@@ -10,7 +10,7 @@ val string_of_constructor : constructor -> string
 val string_of_loc : loc -> string
 val fresh_loc : unit -> loc
 
-type label = LocL of loc | ConsL of constructor
+type label = LocL of loc | ConsL of constructor | SymL of Symbolic.id [@@deriving to_yojson]
 
 val fresh_evar : unit -> id
 
