@@ -151,14 +151,14 @@ module Make (BranchMonad : Util.Monad.BRANCH)
           end
       | TRecord fields -> (
         let instantiate_field m (field_name, ty) = 
-          let* (current_fields, current_lnamectx) = m in
-          let* (nup, new_lnamectx) = aux current_lnamectx ty in
+          let* (current_fields, current_res) = m in
+          let* (nup, new_res) = aux current_res ty in
           let new_fields = Util.Pmap.add (field_name, nup) current_fields in
-          return (new_fields, new_lnamectx)
+          return (new_fields, new_res)
         in
-        let* (instance_fields, new_namectx) = 
-          Util.Pmap.fold instantiate_field (return (Util.Pmap.empty, lnamectx)) fields in
-        return (Record instance_fields, new_namectx)
+        let* (instance_fields, new_res) = 
+          Util.Pmap.fold instantiate_field (return (Util.Pmap.empty, res)) fields in
+        return (Record instance_fields, new_res)
       )
       | ty ->
           failwith
