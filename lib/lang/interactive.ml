@@ -109,7 +109,9 @@ end
 
 (* The following functor create a module of type Interactive.LANG_WITH_INIT
    from a module OpLang of type Language.WITHAVAL_NEG *)
-module Make (OpLang : Language.WITHAVAL_NEG) : LANG_WITH_INIT = struct
+module Make (OpLang : Language.WITHAVAL_NEG) :
+  LANG_WITH_INIT
+    with type 'a EvalMonad.r = 'a OpLang.EvalMonad.r = struct
   module EvalMonad = OpLang.EvalMonad
   module BranchMonad = OpLang.AVal.BranchMonad
   module IEnv = OpLang.IEnv
@@ -291,7 +293,7 @@ module Make (OpLang : Language.WITHAVAL_NEG) : LANG_WITH_INIT = struct
     let* _ = return @@ Util.Debug.print_debug @@ "Generating the skeleton " in
     let* skel = OpLang.generate_nf_term namectxP in
     let* _ = return @@ Util.Debug.print_debug @@ "Filling the skeleton " in
-    let* (a_nf_term, lnamectx) = fill_abstract_val storectx namectxP skel in
+    let* (a_nf_term, (storectx, lnamectx)) = fill_abstract_val storectx namectxP skel in
     let* _ =
       return @@ Util.Debug.print_debug @@ "Once filled we get the new names "
       ^ OpLang.IEnv.Renaming.Namectx.to_string lnamectx in

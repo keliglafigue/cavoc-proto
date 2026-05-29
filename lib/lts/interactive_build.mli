@@ -4,8 +4,6 @@ module type IBUILD = sig
 
   type conf
 
-  (* *)
-
   val interactive_build :
     show_move:(string -> unit) ->
     show_conf:(Yojson.Safe.t -> unit) ->
@@ -17,5 +15,15 @@ module type IBUILD = sig
     unit M.m
 end
 
-module Make : functor (M : Util.Monad.MONAD) (IntLTS : Strategy.LTS) ->
+(* This module type is used by interactive_build to signify that it accepts any
+   LTS, provided that the LTS is capable of resolving non-determinism by itself *)
+module type RUN_LTS = sig
+  include Strategy.LTS
+
+  module M : Util.Monad.MONAD
+
+  val choose : (TypingLTS.Moves.pol_move * passive_conf) EvalMonad.m -> (TypingLTS.Moves.pol_move * passive_conf) EvalMonad.result M.m
+end
+
+module Make : functor (M : Util.Monad.MONAD) (IntLTS : RUN_LTS with module M = M) ->
   IBUILD with module M = M and type conf = IntLTS.conf

@@ -80,7 +80,7 @@ let apply_type_subst type_ctx tsubst =
   let field_ctx = type_ctx.field_ctx in
   { var_ctx; loc_ctx; name_ctx; cons_ctx; type_env; field_ctx }
 
-let build_type_ctx _expr =
+let build_type_ctx () =
   {
     var_ctx= empty_var_ctx;
     loc_ctx= empty_loc_ctx;

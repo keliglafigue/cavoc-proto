@@ -1,5 +1,6 @@
-module Make (OpLang : Language.WITHAVAL_INOUT) : Interactive.LANG_WITH_INIT =
-struct
+module Make (OpLang : Language.WITHAVAL_INOUT) :
+  Interactive.LANG_WITH_INIT
+    with type 'a EvalMonad.r = 'a OpLang.EvalMonad.r = struct
   module EvalMonad = OpLang.EvalMonad
   module BranchMonad = OpLang.AVal.BranchMonad
 
@@ -227,7 +228,16 @@ struct
         fnamectxP_pmap in
     let open BranchMonad in
     let* (skel, typ) = OpLang.generate_nf_term_call fnamectxP_split in
-    let* (a_nf_term, lfnamectx) = fill_abstract_val storectx fnamectxP skel in
+    (* TODO: There are cases in which the behavior is strange.
+             - If the input type is exn, no move will be generated.
+             This is caused by the storectx always being empty.
+             There's a comment in init_pconf (ogs/ogslts.ml)
+             waying that we suppose the initial storectx to be
+             empty, but it is never filled with anything in
+             subsequent calls to o_trans_gen.
+             - generate_abstract_val does not handle ref types, for
+             some reason. *)
+    let* (a_nf_term, (storectx, lfnamectx)) = fill_abstract_val storectx fnamectxP skel in
     let* store = OpLang.Store.generate_store storectx in
     let ((), stackctx) = Stackctx.singleton typ in
     Util.Debug.print_debug @@ "Pushing on the stack "
@@ -246,7 +256,7 @@ struct
       (* We could remove the second ty_hole by simplifying generate_nf_term_ret *)
       let inj_ty ty = ty in
       let* (skel, _typ) = OpLang.generate_nf_term_ret inj_ty cnamectx_pmap in
-      let* (a_nf_term, lfnamectx) = fill_abstract_val storectx fnamectxP skel in
+      let* (a_nf_term, (storectx, lfnamectx)) = fill_abstract_val storectx fnamectxP skel in
       let* store = OpLang.Store.generate_store storectx in
       let namectxP' = (fnamectxP, stackctx') in
       Util.Debug.print_debug @@ "We get the following return :"

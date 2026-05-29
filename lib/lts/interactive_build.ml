@@ -17,7 +17,15 @@ module type IBUILD = sig
     unit M.m
 end
 
-module Make (M : Util.Monad.MONAD) (IntLTS : Strategy.LTS) = struct
+module type RUN_LTS = sig
+  include Strategy.LTS
+
+  module M : Util.Monad.MONAD
+
+  val choose : (TypingLTS.Moves.pol_move * passive_conf) EvalMonad.m -> (TypingLTS.Moves.pol_move * passive_conf) EvalMonad.result M.m
+end
+
+module Make (M : Util.Monad.MONAD) (IntLTS : RUN_LTS with module M = M) = struct
   module M = M
   type conf = IntLTS.conf
 
@@ -27,14 +35,12 @@ module Make (M : Util.Monad.MONAD) (IntLTS : Strategy.LTS) = struct
       conf =
     match conf with
     | IntLTS.Active act_conf -> begin
-        match IntLTS.EvalMonad.run (IntLTS.p_trans act_conf) with
-        | PropStop ->
+        let* res = IntLTS.choose (IntLTS.p_trans act_conf) in
+        match res with
+        | IntLTS.EvalMonad.PropStop ->
             print_endline "Proponent has quitted the game.";
             return ()
-        | OpStop ->
-            failwith
-              "Opponent has stopped while it was not its turn. Please report."
-        | Continue (output_move, pas_conf) ->
+        | IntLTS.EvalMonad.Continue (output_move, pas_conf) ->
             let move_string =
               IntLTS.TypingLTS.Moves.string_of_pol_move output_move in
             show_move move_string;

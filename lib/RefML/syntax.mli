@@ -10,7 +10,7 @@ val string_of_constructor : constructor -> string
 val string_of_loc : loc -> string
 val fresh_loc : unit -> loc
 
-type label = LocL of loc | ConsL of constructor
+type label = LocL of loc | ConsL of constructor | SymL of Symbolic.id [@@deriving to_yojson]
 
 val fresh_evar : unit -> id
 
@@ -39,6 +39,8 @@ and term =
   | Constructor of constructor * term
   | Name of Names.name
   | Loc of loc
+  (* This constructor embeds a symbolic expression into a RefML expression *)
+  | Symbolic of Symbolic.symbolic_expr
   | Unit
   | Int of int
   | Bool of bool

@@ -12,25 +12,54 @@ module type RUNNABLE = sig
   include MONAD
   type 'a result = 
     | PropStop
-    | OpStop
     | Continue of 'a
-  val run : 'a m -> 'a result
+
+  type 'a r
+
+  val run : 'a m -> 'a result r
   val fail : unit -> 'a m
 end
 
 module Result = struct
   type 'a result = 
     | PropStop
-    | OpStop
     | Continue of 'a
-  type 'a m = 'a result
+  type 'a m = 'a result list
 
-  let return x = Continue x
-  let ( let* ) a f = match a with PropStop -> PropStop | OpStop -> OpStop | Continue x -> f x
+  type 'a r = 'a list
+
+  let return x =
+    [ Continue x ]
+
+  let ( let* ) a f =
+    let bs = List.map
+      (function PropStop -> [ PropStop ] | Continue x -> f x) a in
+    List.concat bs
 
   let run x = x
 
-  let fail () = PropStop
+  let fail () =
+    [ PropStop ]
+end
+
+module SingleResult = struct
+  type 'a result =
+    | PropStop
+    | Continue of 'a
+  type 'a m = 'a result
+  type 'a r = 'a
+
+  let return x =
+    Continue x
+
+  let ( let* ) a f =
+    (function PropStop -> PropStop | Continue x -> f x) a
+
+  let run a =
+    a
+  
+  let fail () =
+    PropStop
 end
 
 module Option = struct
