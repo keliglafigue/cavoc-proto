@@ -2,13 +2,13 @@
 opam-version: "2.0"
 synopsis: "A short synopsis"
 description: "A longer description"
-maintainer: ["Guilhem Jaber"]
-authors: ["Guilhem Jaber"]
+maintainer: ["Guilhème Jaber"]
+authors: ["Guilhème Jaber"]
 license: "LICENSE"
 tags: ["topics" "to describe" "your" "project"]
-homepage: "https://github.com/username/reponame"
+homepage: "https://github.com/gjaber/cavoc-proto"
 doc: "https://url/to/documentation"
-bug-reports: "https://github.com/username/reponame/issues"
+bug-reports: "https://github.com/gjaber/cavoc-proto/issues"
 depends: [
   "ocaml"
   "odoc"
@@ -22,7 +22,7 @@ depends: [
   "cohttp-lwt-jsoo"
   "cohttp-lwt-unix"
   "ppx_deriving_yojson"
-  "menhir" {>= "20180523"}
+  "msat"
 ]
 build: [
   ["dune" "subst"] {dev}
@@ -38,5 +38,5 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/username/reponame.git"
+dev-repo: "git+https://github.com/gjaber/cavoc-proto.git"
 x-maintenance-intent: ["(latest)"]

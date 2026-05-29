@@ -6,11 +6,11 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github gjaber/cavoc-proto))
 
-(authors "Guilhem Jaber")
+(authors "Guilhème Jaber")
 
-(maintainers "Guilhem Jaber")
+(maintainers "Guilhème Jaber")
 
 (license LICENSE)
 
@@ -32,7 +32,8 @@
   cohttp
   cohttp-lwt-jsoo
   cohttp-lwt-unix
-  ppx_deriving_yojson)
+  ppx_deriving_yojson
+  msat)
  (tags
   (topics "to describe" your project)))
 
