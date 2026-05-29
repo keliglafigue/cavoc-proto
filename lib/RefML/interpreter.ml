@@ -8,8 +8,6 @@ let string_of_opconf (expr, store) =
 
 module SymbolicEvalState = struct
     (* The state monad already emulates lazy evaluation of branches *)
-    (* TODO: Parametrize this module with a STORE module instead of
-             hardcoding the store type *)
     type 'a m =  store -> ('a * store) list
 
     let return (x : 'a) : 'a m =
@@ -24,9 +22,7 @@ module SymbolicEvalState = struct
       fun store ->
         match Store.var_lookup store id with
         | Some v -> [ v, store ]
-        (* TODO: Dubious. This is what the interpreter originally did,
-           but an unvound variable is probably a type checker error. *)
-        | None -> [ Var id, store ]
+        | None -> failwith ("Unbound variable: " ^ id)
 
     let alloc expr : loc m =
       fun store -> [ Store.loc_allocate store expr ]

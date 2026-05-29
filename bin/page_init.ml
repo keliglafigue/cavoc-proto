@@ -31,7 +31,7 @@ let rec init_page () =
 
   Ui_helpers.set_button_enabled "conf-prev" false ;
   Ui_helpers.set_button_enabled "conf-next" false ;
-  Ui_helpers.set_button_enabled "conf-choose" false ;
+  Ui_helpers.set_button_enabled "conf-accept" false ;
 
   Js.Unsafe.set select_button "disabled" Js._true;
   Js.Unsafe.set select_button "style"

@@ -58,7 +58,7 @@ let choose_conf confs =
 
   let load_btn   = Dom_html.getElementById "load-btn" in
   let stop_btn   = Dom_html.getElementById "stop-btn" in
-  let choose_btn = Dom_html.getElementById "conf-choose" in
+  let accept_btn = Dom_html.getElementById "conf-accept" in
   let prev_btn   = Dom_html.getElementById "conf-prev" in
   let next_btn   = Dom_html.getElementById "conf-next" in
 
@@ -72,7 +72,7 @@ let choose_conf confs =
   let update () =
     Ui_helpers.set_button_enabled "conf-prev" (has_prev ()) ;
     Ui_helpers.set_button_enabled "conf-next" (has_next ()) ;
-    Ui_helpers.set_button_enabled "conf-choose" true ;
+    Ui_helpers.set_button_enabled "conf-accept" true ;
 
     match List.nth confs !cur with
     | Some conf -> show_conf conf
@@ -91,14 +91,14 @@ let choose_conf confs =
   let disable x =
     Ui_helpers.set_button_enabled "conf-prev" false ;
     Ui_helpers.set_button_enabled "conf-next" false ;
-    Ui_helpers.set_button_enabled "conf-choose" false ;
+    Ui_helpers.set_button_enabled "conf-accept" false ;
     Ui_helpers.set_button_enabled "select-btn" true ;
 
     Lwt.return x
   in
 
   Lwt.pick [
-    (Lwt_js_events.click choose_btn >>= disable >>= fun _ -> Lwt.return !cur) ;
+    (Lwt_js_events.click accept_btn >>= disable >>= fun _ -> Lwt.return !cur) ;
     (Lwt_js_events.click load_btn >>= disable >>= fun _ -> Lwt.fail (Failure "Stop")) ;
     (Lwt_js_events.click stop_btn >>= disable >>= fun _ -> Lwt.fail (Failure "Stop")) ;
   ]

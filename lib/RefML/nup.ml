@@ -98,7 +98,6 @@ module Make (BranchMonad : Util.Monad.BRANCH)
           let* (value, storectx') = GenerateValue.generate_bool storectx in
           return (value, (storectx', lnamectx))
       | TInt ->
-          (* TODO: replace pick_int by some kind of "Hole" constructor *)
           let* i = BranchMonad.pick_int () in
           return (Int i, res)
       | TProd (ty1, ty2) ->

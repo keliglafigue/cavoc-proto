@@ -2,8 +2,7 @@
   returns a module with signature Lang.Language.COMP and the Store module
   contained in Lang.Languages.COMP is not compatible with Refml.Store. 
   These two Store modules are actually the same but OCaml doesn't know
-  about this.
-  TODO: add symbolic execution related functions to the Language signatures... *)
+  about this. *)
 
 open Refml
 
@@ -23,7 +22,6 @@ let () =
   let type_ctx = Type_ctx.build_type_ctx () in
   let store    = Store.empty_store in
 
-  (* TODO: add symbolic_add to the store signature in lib/lang/language.mli ? *)
   let register_symbolic (store, tyctx) (name, ty) =
     let store = Store.symbolic_add_named store name ty in
     let tyctx = Type_ctx.extend_var_ctx tyctx name ty in
@@ -34,6 +32,7 @@ let () =
   let store, type_ctx = List.fold_left
     register_symbolic (store, type_ctx) symbolic_names in
 
+  (* This raises an exception if expr is ill-typed *) 
   let _, _ = Type_checker.typing_expr type_ctx expr in
   
   let pp_opconf fmt (expr, store) =

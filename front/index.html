@@ -119,9 +119,14 @@
         </div>
 
         <button id="submit">Evaluate</button>
-        <button id="conf-prev">Previous Configuration</button>
-        <button id="conf-next">Next Configuration</button>
-        <button id="conf-choose">Choose Configuration</button>
+        <div style="display: flex; flex-direction: column">
+            <span>Configurations: </span>
+            <div>
+                <button id="conf-prev">Previous</button>
+                <button id="conf-next">Next</button>
+                <button id="conf-accept">Accept</button>
+            </div>
+        </div>
       </div>
     </div>
     <script src="../_build/default/bin/explore_web.bc.js"></script>

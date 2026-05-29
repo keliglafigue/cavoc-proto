@@ -40,7 +40,7 @@ and term =
   | Name of Names.name
   | Loc of loc
   (* This constructor embeds a symbolic expression into a RefML expression *)
-  | Symbolic of Symbolic.konstraint
+  | Symbolic of Symbolic.symbolic_expr
   | Unit
   | Int of int
   | Bool of bool

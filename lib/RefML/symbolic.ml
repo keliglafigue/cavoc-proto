@@ -3,19 +3,15 @@ module E = Sat.Int_lit
 module F = Msat_tseitin.Make(E)
 
 type id = int [@@deriving to_yojson]
-(* type id = E.t *)
 
-(* TODO: Unfortunate name, this is just a symbolic expression.
-         It only becomes a constraint once added to pathcond field
-         in a branch *)
-type konstraint =
+type symbolic_expr =
   | Kvar  of id
   | Kbool of bool
-  | Knot  of konstraint
-  | Keq   of konstraint * konstraint
-  | Kneq  of konstraint * konstraint
-  | Kand  of konstraint * konstraint
-  | Kor   of konstraint * konstraint
+  | Knot  of symbolic_expr
+  | Keq   of symbolic_expr * symbolic_expr
+  | Kneq  of symbolic_expr * symbolic_expr
+  | Kand  of symbolic_expr * symbolic_expr
+  | Kor   of symbolic_expr * symbolic_expr
 
 let neg = function
   | Knot k -> k
@@ -27,7 +23,7 @@ type branch =
   (* All symbolic variables declared in this branch *)
   { pathdecl : symbolic_ctx
   (* All constraints accumulated in this branch *)
-  ; pathcond : konstraint list
+  ; pathcond : symbolic_expr list
   }
 
 let formula_of_konstraint vmap =

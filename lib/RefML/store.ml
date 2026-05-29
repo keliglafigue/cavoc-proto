@@ -84,16 +84,14 @@ module Storectx = struct
 
   type typ = Types.typ
 
-  (* TODO: Not printing parts of the storectx if these parts are empty
-           may be confusing?
-           Think about why it has been done that way before
-           adding the machinery to print symbolic_ctx. *)
-  let pp fmt (loc_ctx, _symbolic_ctx, cons_ctx) =
+  let pp fmt (loc_ctx, symbolic_ctx, cons_ctx) =
     if Util.Pmap.is_empty cons_ctx then
-      Format.fprintf fmt "%a" Type_ctx.pp_loc_ctx loc_ctx
-    else
       Format.fprintf fmt "%a ; %a" Type_ctx.pp_loc_ctx loc_ctx
+        Symbolic.pp_pathdecl symbolic_ctx
+    else
+      Format.fprintf fmt "%a ; %a ; %a" Type_ctx.pp_loc_ctx loc_ctx
         Type_ctx.pp_cons_ctx cons_ctx
+        Symbolic.pp_pathdecl symbolic_ctx
 
   let to_string = Format.asprintf "%a" pp
 

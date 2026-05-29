@@ -188,27 +188,6 @@ module WithAValBase (BranchMonad : Util.Monad.BRANCH) = struct
 
   let refold_nf_term = Syntax.refold_nf_term
   let get_nf_term = Syntax.get_nf_term
-
-  (*
-  let generate_nf_skeleton = Nf_gen.generate_nf_skeleton
-  let fill_nf_skeleton = Nf_gen.fill_nf_skeleton*)
-
-(*
-  module AVal :
-    Lang.Abstract_val.AVAL
-      with type name = Names.name
-       and type interactive_env = Ienv.IEnv.t
-       and type label = Syntax.label
-       and type name_ctx = Namectx.t
-       and type negative_type = Types.negative_type
-       and type negative_val = Syntax.negative_val
-       and type renaming = Renaming.t
-       and type store_ctx = Store.Storectx.t
-       and type typ = Types.typ
-       and type value = Syntax.value
-       and module BranchMonad = BranchMonad =
-    Nup.Make (BranchMonad)
-*)
 end
 
 module WithAValSymbolic (BranchMonad : Util.Monad.BRANCH) :

@@ -62,7 +62,7 @@ and term =
     (* We should generalize constructors so that it takes a list of arguments *)
   | Name of Names.name
   | Loc of loc
-  | Symbolic of Symbolic.konstraint
+  | Symbolic of Symbolic.symbolic_expr
   | Unit
   | Int of int
   | Bool of bool

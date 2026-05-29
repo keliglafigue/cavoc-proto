@@ -193,7 +193,6 @@ let build_strategy (module LTS : Lts_kind.SINGLE_RESULT_LTS_WITH_INIT) =
   | Compare -> begin
       let exprBuffer1 = open_lexbuf !filename1 in
       let exprBuffer2 = open_lexbuf !filename2 in
-      (* This is needed to make sure that Synch_LTS is *)
       let module Synch_LTS =
         struct
           include Lts.Synch_lts.Make (LTS)

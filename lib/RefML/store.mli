@@ -21,7 +21,7 @@ val cons_add : store -> (Syntax.constructor*Types.typ) -> store
    its unique id *)
 val symbolic_add : store -> (Symbolic.id * store)
 val symbolic_add_named : store -> Syntax.id -> Types.typ -> store
-val symbolic_add_constraint : store -> Symbolic.konstraint -> store
+val symbolic_add_constraint : store -> Symbolic.symbolic_expr -> store
 
 val embed_cons_ctx : Type_ctx.cons_ctx -> store
 
