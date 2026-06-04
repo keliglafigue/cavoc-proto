@@ -23,6 +23,10 @@ Currently, the only programming language supported is a fragment of OCaml with:
 You can build the project using ``dune build``.
 Its dependencies are ``lwt``, ``js_of_ocaml``, and ``yojson``.
 
+The code is documented using `odoc`. Documentation can be generated using
+`dune build @doc`. It can then be viewed in your web browser by accessing
+`_build/default/_doc/_html/cavoc/index.html`.
+
 ## explore-web
 
 To run it, you first need to run a simple web server via ``dune exec ./bin/server.exe``.
@@ -51,4 +55,3 @@ You can also pass the following options to ``explore``:
     This corresponds to forbidding the client to use higher-order references to store the functions provided by the module during the interaction.
   * -no-cps, Use a representation of actions as calls and returns rather than in cps style. 
     This is incompatible with the -vis option.
-

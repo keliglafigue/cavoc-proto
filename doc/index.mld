@@ -1,0 +1,28 @@
+{1 cavoc-proto}
+
+{e CAVOC} is a  framework for building interactive models of programming languages
+based on operatioal game semantics.
+It provides the possibility to explore dynamically the semantics of a program
+module: you take the role of a client of the module,  interacting with it by
+choosing which input action to perform.
+
+This documentation describes the implementation of the prototype. If you are
+looking for installation & use instructions, please refer to the [README.md]
+file.
+
+{2 Synopsis}
+
+{3:machinelanguages Machine languages}
+
+{e CAVOC} is parametric with respect to the programming language (called
+{e machine language} in this setting) used to write the code of modules and
+clients. To create a new machine language to use {e CAVOC} on, you need to
+provide an instance of {!module-type: Lang.Interactive.LANG_WITH_INIT}.
+
+{e CAVOC} provides a functor {!module: Lang.Interactive.Make} to build such an
+instance from a lower representation, namely an instance of
+{!module-type: Lang.Language.WITHAVAL_NEG}.
+
+{2 Contents}
+
+{!modules: Lang Lts Ogs Pogs Refml Util}

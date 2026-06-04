@@ -1,5 +1,6 @@
 (library
- (name lts)
+  (public_name cavoc.lts)
+  (name lts)
   (preprocess
-  (pps lwt_ppx ppx_deriving_yojson))
- (libraries lang util lwt yojson ppx_deriving_yojson.runtime))
+    (pps lwt_ppx ppx_deriving_yojson))
+  (libraries lang util lwt yojson ppx_deriving_yojson.runtime))
