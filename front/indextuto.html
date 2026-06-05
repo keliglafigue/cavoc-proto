@@ -248,6 +248,7 @@
           })
           .then((mliContent) => {
               signatureEditor.session.setValue(mliContent);
+              document.getElementById('submit').click();
           })
           .catch((error) => {
              if (error.message === "Fini") {
