@@ -1,6 +1,9 @@
-(*  This file contains signatures and implementation for various monads.*)
+(**
+  This module contains the signatures and implementations of monads used throughout
+  {e CAVOC}.
+ *)
 
-(** Standard signature for monads **)
+(** Standard signature for monads. *)
 module type MONAD = sig
   type 'a m
 
@@ -8,18 +11,43 @@ module type MONAD = sig
   val ( let* ) : 'a m -> ('a -> 'b m) -> 'b m
 end
 
+(** {2 Runnable monad} *)
+
+(**
+  Standard signature for evaluation monads.
+  
+  Monads implementing [RUNNABLE] are used by {!page-index.machinelanguages}
+  to encapsulate the return type of the interpreter.
+  *)
 module type RUNNABLE = sig
   include MONAD
-  type 'a result = 
-    | PropStop
-    | Continue of 'a
 
+  (**
+     Result of evaluation of an active configuration.
+   *)
+  type 'a result = 
+    | PropStop (** This means that the proponent (i.e. the module) has stopped playing. *)
+    | Continue of 'a (** The interpreter successfuly returned some configuration(s). *)
+
+  (**
+    This type encapsulates one or more {!result}.
+
+    {!page-index.machinelanguages} are responsible for choosing an appropriate
+    implementation of [RUNNABLE] and exposing its type [r] via module
+    constraints. Type [r] is then automatically propagated upwards by functors
+    tranforming machine languages.
+   *)
   type 'a r
 
   val run : 'a m -> 'a result r
   val fail : unit -> 'a m
 end
 
+(**
+  Multi-result implementation of {!module-type: RUNNABLE}.
+
+  See {!type: RUNNABLE.r} for details about type {!type: Result.r}
+  *)
 module Result = struct
   type 'a result = 
     | PropStop
@@ -28,20 +56,26 @@ module Result = struct
 
   type 'a r = 'a list
 
-  let return x =
+  let return x : 'a m =
     [ Continue x ]
 
-  let ( let* ) a f =
+  let ( let* ) (a : 'a m) (f : 'a -> 'b m) : 'b m  =
     let bs = List.map
       (function PropStop -> [ PropStop ] | Continue x -> f x) a in
     List.concat bs
 
   let run x = x
 
-  let fail () =
+  let fail () : 'a m =
     [ PropStop ]
 end
 
+
+(**
+  Single-result implementation of {!module-type: RUNNABLE}.
+
+  See {!type: RUNNABLE.r} for details about type {!type: SingleResult.r}
+  *)
 module SingleResult = struct
   type 'a result =
     | PropStop
@@ -49,16 +83,16 @@ module SingleResult = struct
   type 'a m = 'a result
   type 'a r = 'a
 
-  let return x =
+  let return x : 'a m =
     Continue x
 
-  let ( let* ) a f =
+  let ( let* ) (a : 'a m) (f : 'a -> 'b m) : 'b m =
     (function PropStop -> PropStop | Continue x -> f x) a
 
-  let run a =
+  let run a : 'a r =
     a
   
-  let fail () =
+  let fail () : 'a m =
     PropStop
 end
 
@@ -73,9 +107,10 @@ module Option = struct
   let fail () = None
 end
 
-(** A simple branching monad **)
+(** {2 Branching monad} *)
 
-(*** Signature ***)
+
+(** Standard branching monad signature. *)
 module type BRANCH = sig
   include MONAD
 
@@ -89,7 +124,7 @@ module type BRANCH = sig
   val run : 'a m -> 'a list
 end
 
-(*** List implementation of the Branching monad ***)
+(** List implementation of the Branching monad *)
 module ListB : BRANCH = struct
   type 'a m = 'a list
 
@@ -105,7 +140,7 @@ module ListB : BRANCH = struct
 end
 
 
-(*** An implementation of the Branching monad with user input to decide how to branch ***)
+(** An implementation of the Branching monad with user input to decide how to branch *)
 module UserChoose : BRANCH = struct
   type 'a m = 'a option
 
@@ -140,14 +175,14 @@ module UserChoose : BRANCH = struct
   let run = function None -> [] | Some x -> [ x ]
 end
 
-(** State monad **)
+(** {2 State monad} *)
 
-(*** Signature for the stored elements ***)
+(** Signature for the stored elements *)
 module type MEMSTATE = sig
   type t
 end
 
-(*** Signature for the State monad ***)
+(** Standard state monad signature. *)
 module type STATE = functor (State : MEMSTATE) -> sig
   type mem_state = State.t
 
@@ -158,7 +193,7 @@ module type STATE = functor (State : MEMSTATE) -> sig
   val runState : 'a m -> mem_state -> 'a * mem_state
 end
 
-(*** Standard implementation for the State monad ***)
+(** Standard implementation for the State monad *)
 module State : STATE =
 functor
   (MemState : MEMSTATE)
@@ -178,7 +213,7 @@ functor
       runState (f avalues) st'
   end
 
-(*** Signature for the combination of the Branching and State monad ***)
+(** Signature for the combination of the Branching and State monad *)
 module type BRANCH_STATE = functor (State : MEMSTATE) -> sig
   type mem_state = State.t
 
@@ -219,10 +254,9 @@ functor
       aux avalues st'
   end
 
-(** Write monad **)
-(*** Used to produce trace of actions that can be printed ***)
+(** {2 Output monad} *)
 
-(*** Signature for showable elements ***)
+(** Signature for showable elements *)
 module type SHOWABLE = sig
   type t
 
@@ -239,6 +273,11 @@ module type OUTPUT = functor (MemState : SHOWABLE) -> sig
   val get_trace : 'a m -> event list
 end
 
+(**
+  Write monad.
+
+  Used to produce a trace of actions that can be printed.
+ *)
 module Output : OUTPUT =
 functor
   (MemState : SHOWABLE)
@@ -260,7 +299,7 @@ functor
           let (y,tr')  = f x in (y, tr @ tr')
   end
 
-(*** Signature for the combination of Branching and Write monad ***)
+(** Signature for the combination of Branching and Write monad *)
 module type BRANCH_WRITE = functor (MemState : SHOWABLE) -> sig
   type trace
 
@@ -274,7 +313,7 @@ module type BRANCH_WRITE = functor (MemState : SHOWABLE) -> sig
   val get_trace : 'a m -> trace list
 end
 
-(*** Implementation for the combination of Branching and Write monad using lists ***)
+(** Implementation for the combination of Branching and Write monad using lists *)
 module ListWrite : BRANCH_WRITE =
 functor
   (MemState : SHOWABLE)
@@ -299,7 +338,7 @@ functor
       List.flatten (List.map flift expr)
   end
 
-(*** Implementation for the combination of Branching and Write monad using user input ***)
+(** Implementation for the combination of Branching and Write monad using user input *)
 module UserChooseWrite : BRANCH_WRITE =
 functor
   (MemState : SHOWABLE)

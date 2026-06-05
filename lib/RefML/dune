@@ -1,11 +1,12 @@
 (ocamllex lexer)
 
 (menhir
- (modules parser)
- (explain true))
+  (modules parser)
+  (explain true))
 
 (library
- (name refml)
- (preprocess
-  (pps ppx_deriving_yojson))
- (libraries lang util yojson ppx_deriving_yojson.runtime msat msat.sat msat.tseitin))
+  (public_name cavoc.refml)
+  (name refml)
+  (preprocess
+    (pps ppx_deriving_yojson))
+  (libraries lang util yojson ppx_deriving_yojson.runtime msat msat.sat msat.tseitin))
