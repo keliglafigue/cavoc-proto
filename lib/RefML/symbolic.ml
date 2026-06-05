@@ -1,9 +1,15 @@
+(**
+  The [Symbolic] module contains the definition of symbolic expression as well
+  as the facilities to call some solver.
+ *)
+
 module Sat = Msat_sat
 module E = Sat.Int_lit
 module F = Msat_tseitin.Make(E)
 
 type id = int [@@deriving to_yojson]
 
+(** Symbolic expression *)
 type symbolic_expr =
   | Kvar  of id
   | Kbool of bool
@@ -17,12 +23,13 @@ let neg = function
   | Knot k -> k
   | k -> Knot k
 
+(** typing context for symbolic variables *)
 type symbolic_ctx = (id * Types.typ) list [@@deriving to_yojson]
 
 type branch =
-  (* All symbolic variables declared in this branch *)
+  (** All symbolic variables declared in this branch *)
   { pathdecl : symbolic_ctx
-  (* All constraints accumulated in this branch *)
+  (** All constraints accumulated in this branch *)
   ; pathcond : symbolic_expr list
   }
 
@@ -111,13 +118,16 @@ let fresh_symbolic =
   let i = ref 0 in
   (fun () -> i := !i + 1 ; !i)
 
-(* Returns the union of the symbolic variables declared in ctx1 and ctx2 *)
+(**
+  Returns the union of the symbolic variables declared in two symbolic
+  contexts, assuming the context are disjoint
+ *)
 let union_ctx ctx1 ctx2 =
-  (* Since symbolic variables are uniquely generated,
-     ctx1 and ctx2 are disjoint *)
   ctx1 @ ctx2
 
-(* Extends a branch with all the declarations from ctx *)
+(**
+  Same as {!val: union_ctx} but operates on the symbolic_ctx of a branch instead.
+ *)
 let extend_symbolic_ctx branch ctx =
   { branch with pathdecl = branch.pathdecl @ ctx }
 
@@ -127,9 +137,11 @@ let empty =
   ; pathcond = []
   }
 
+(** Adds a fresh symbolic variable to a context *)
 let unconstrained symbolic_ctx =
   let sym = fresh_symbolic () in
   sym, (sym, Types.TBool) :: symbolic_ctx
 
+(** Adds a constraint to a branch *)
 let add_constraint branch konstraint =
   { branch with pathcond = konstraint :: branch.pathcond }
