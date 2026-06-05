@@ -191,6 +191,7 @@
         const jsonFileName = `tuto${level}.json`;
         const mlFileName = `tuto${level}.ml`;
         const mliFileName = `tuto${level}.mli`;
+        const hintFileName = `tuto${level}.md`;
         
         // Définition du nom de fichier exposé au lexer OCaml
         window.loadedFile = `tudo${level}`;
@@ -248,6 +249,20 @@
           })
           .then((mliContent) => {
               signatureEditor.session.setValue(mliContent);
+              document.getElementById('submit').click();
+                        return fetch(`../tuto/${hintFileName}`)
+          })
+          .then((hintResp) => {
+            if (hintResp.ok) return hintResp.text();
+            return "";
+          })
+          .then((hintText) => {
+            if (hintText != "") {
+              let text = marked.parse(hintText);
+              let modal = createModal(mlFileName, true);
+              setModalMessage(modal, text);
+              openModal(modal);
+            }
           })
           .catch((error) => {
              if (error.message === "Fini") {
