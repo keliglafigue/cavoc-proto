@@ -145,7 +145,7 @@ module Make (BranchMonad : Util.Monad.BRANCH)
             match cons_ty with
             | TArrow (pty, _) ->
                 let* (nup, res) = aux res pty in
-                return (Constructor (c, nup), res)
+                return (Constructor (c, Some nup), res)
             | _ -> failwith "TODO"
           end
       | TRecord fields -> (

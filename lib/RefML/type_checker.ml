@@ -22,7 +22,7 @@ let rec infer_type type_ctx type_subst expr =
             ^ Type_ctx.string_of_var_ctx type_ctx.var_ctx
             ^ " .")
     end
-  | Constructor (cons, e) -> begin
+  | Constructor (cons, Some e) -> begin
       match Util.Pmap.lookup cons type_ctx.cons_ctx with
       | Some (TArrow (pty, ty)) ->
           let (pty', type_subst') = infer_type type_ctx type_subst e in
@@ -49,6 +49,7 @@ let rec infer_type type_ctx type_subst expr =
             ^ Type_ctx.string_of_cons_ctx type_ctx.cons_ctx
             ^ " .")
     end
+  | Constructor(_cons, None) -> failwith "Empty constructor not implemented yet (infer_type)"
   | Name n -> begin
       match Namectx.Namectx.lookup_exn (Type_ctx.get_name_ctx type_ctx) n with
       | ty -> (ty, type_subst)

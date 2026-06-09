@@ -28,7 +28,7 @@
 %token TRY
 %token PIPE
 
-%token TYPE VAL EXCEPTION OF
+%token TYPE VAL EXCEPTION OF MATCH
 
 %token TUNIT
 %token TINT
@@ -158,7 +158,8 @@ proj_expr:
 
 simple_expr:
   | v=VAR             { Var v }
-  | c=CONSTRUCTOR p=simple_expr    { Constructor (c, p)}
+  | c=CONSTRUCTOR p=expr    { Constructor (c, Some p)}
+  | c=CONSTRUCTOR   { Constructor (c, None)}
   | UNIT            { Unit }
   | n=INT             { Int n }
   | TRUE            { Bool true }

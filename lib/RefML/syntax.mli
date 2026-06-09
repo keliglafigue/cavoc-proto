@@ -36,7 +36,7 @@ type handler = Handler of (pattern * term)
 
 and term =
   | Var of id
-  | Constructor of constructor * term
+  | Constructor of constructor * term option
   | Name of Names.name
   | Loc of loc
   (* This constructor embeds a symbolic expression into a RefML expression *)
