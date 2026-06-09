@@ -65,15 +65,22 @@ let generate_store_html_from_json (store_json : Yojson.Safe.t) (ienv_json : Yojs
   | _ -> "<div style='padding: 10px; color: #f92672;'>Invalid store format (expected List of Objects)</div>"
 
 let normalize_ienv = function
+  (* CPS: continuations are values (named). *)
   | `Assoc _ as a -> a
+  (* Direct style: values are named (fields)
+                   execution contexts (stack = exprs) are unamed *)
   | `List [`Assoc fields; `List exprs] ->
-      let extra =
-        exprs
-        |> List.mapi (fun i v ->
-            ("stack" ^ string_of_int i, v))
-      in
-      `Assoc (fields @ extra)
-  | other -> other
+      begin
+        match exprs with
+        | [] -> `Assoc fields (* no execution context *)
+        | active :: rest ->
+            let active = ("active-ctx", active) in
+            (* Reverse stack order to keep numbers stable *)
+            let ctx = List.rev rest in
+            let ctx = List.mapi (fun i v -> "stack" ^ string_of_int i, v) ctx in
+            `Assoc (active :: fields @ ctx)
+      end
+  | _ -> failwith "Invalid IEnv json, expected `Assoc or `List."
 
 let generate_ienv_html (ienv_obj : Yojson.Safe.t) : string =
   match normalize_ienv ienv_obj with
