@@ -79,12 +79,19 @@ signature_decl:
 
 implem_decl:
   | TYPE v=VAR EQ t=ty { TypeDecl (v,t) }
+  | TYPE v=VAR EQ a=algebraic_decl { AlgebraicTypeDecl (v, Util.Pmap.list_to_pmap a) }
   | LET v=VAR l=list_ident EQ e=expr_with_try
     { ValDecl (v, List.fold_left (fun expr var -> Fun (var,expr)) e l) }
   | LET REC v=VAR t=typed_ident l=list_ident EQ e=expr
     { ValDecl (v, Fix ((v,TUndef),t, List.fold_left (fun expr_with_try var -> Fun (var,expr_with_try)) e l)) }
   | EXCEPTION c=CONSTRUCTOR { ExnDecl (c, None) }
   | EXCEPTION c=CONSTRUCTOR OF t=ty { ExnDecl (c, Some t) }
+
+algebraic_decl:
+  | PIPE c=CONSTRUCTOR { [(c, None)] }
+  | PIPE c=CONSTRUCTOR OF t=ty { [(c, Some t)] }
+  | e=algebraic_decl PIPE c=CONSTRUCTOR { (c, None)::e }
+  | e=algebraic_decl PIPE c=CONSTRUCTOR OF t=ty { (c, Some t)::e }
 
 list_signature_decl:
   |  { [] }

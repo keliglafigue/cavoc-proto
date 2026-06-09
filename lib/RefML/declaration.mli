@@ -11,6 +11,7 @@ val string_of_signature : signature_decl list -> string
 
 type implem_decl =
   | TypeDecl of (Types.id * Types.typ)
+  | AlgebraicTypeDecl of (Types.id * (Syntax.id, Types.typ option) Util.Pmap.pmap)
   | ValDecl of (Syntax.id * Syntax.term)
   | ExnDecl of (Syntax.constructor * Types.typ option)
 
