@@ -18,7 +18,7 @@ The modification will be done in lib/RefML/lexer.mll, and possibly in the functi
 
 * [x] Focus on ienv window when loading the page
 
-* [ ] Correct bug in the web interface regarding highlighting the top element of the stack in the ienv window when direct style option is selected.
+* [x] Correct bug in the web interface regarding highlighting the top element of the stack in the ienv window when direct style option is selected.
 
 * [x] Merge the interface of interactive_build.mli (used by the web interface), graph.mli and generate_trace.mli (used by the CLI executable) into a single one, with two implementations
 

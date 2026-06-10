@@ -24,16 +24,20 @@ let highlight_subject (move_json_str : string) : unit =
   done;
   try
     let json = Yojson.Safe.from_string move_json_str in
+    let set_target_highlighted name =
+      let target_id = "ienv-item-" ^ name in
+      let target_el = Dom_html.getElementById_opt target_id in
+      match target_el with
+            | Some el -> el##.classList##add (Js.string "ienv-item-highlighted")
+            | None -> ()
+    in
     match json with
     | `Assoc fields ->
         (match List.assoc_opt "subjectName" fields with
-        | Some (`String name) ->
-            let target_id = "ienv-item-" ^ name in
-            let target_el = Dom_html.getElementById_opt target_id in
-            (match target_el with
-            | Some el -> el##.classList##add (Js.string "ienv-item-highlighted")
-            | None -> ())
-        | _ -> ())
+        | Some (`String name) -> set_target_highlighted name
+        (* No subject name: Direct style, this move is a "return" and there is
+           at least one context so active-ctx exists *)
+        | _ -> set_target_highlighted "active-ctx")
     | _ -> ()
   with _ -> ()
 
