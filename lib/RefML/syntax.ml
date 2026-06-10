@@ -36,7 +36,7 @@ let fresh_evar () =
 
 (* Syntax of Expressions *)
 
-type pattern = PatCons of constructor * id | PatVar of id
+type pattern = PatCons of constructor * id option | PatVar of id
 
 type binary_op =
   | Plus
@@ -85,11 +85,13 @@ and term =
   | Assert of term
   | Raise of term
   | TryWith of (term * handler list)
+  | Match of (term * handler list)
   | Hole
   | Error
 
 let pp_pattern fmt = function
-  | PatCons (c, id) -> Format.fprintf fmt "%s %s" c id
+  | PatCons (c, Some id) -> Format.fprintf fmt "%s %s" c id
+  | PatCons (_, None) -> failwith "Empty PatCons not implemented yet (pp_pattern)"
   | PatVar id -> Format.pp_print_string fmt id
 
 let pp_typed_var fmt = function
@@ -169,6 +171,7 @@ and pp_term fmt = function
     Format.pp_print_string fmt "}";
   )
   | Projection (e, v) -> Format.fprintf fmt "%a.%s" pp_par_term e v
+  | Match _ -> failwith "Match expression are not yet supported (pp_term)"
 
 and pp_handler fmt (Handler (pat, expr)) =
   Format.fprintf fmt "%a -> %a" pp_pattern pat pp_term expr
@@ -218,6 +221,7 @@ let rec get_new_names lnames = function
     let aux current_lnames (_, e) = get_new_names current_lnames e in
     Util.Pmap.fold aux lnames fields
   | Constructor (_, None) -> failwith "Empty constructor not implemented yet (get_new_names)"
+  | Match _ -> failwith "Match expression are not yet supported (get_new_names)"
 
 let get_names = get_new_names empty_name_set
 
@@ -261,6 +265,7 @@ let rec get_new_labels label_l = function
   | Record fields -> 
     let aux current_label_l (_, e) = get_new_labels current_label_l e in
     Util.Pmap.fold aux label_l fields
+  | Match _ -> failwith "Match expression are not yet supported (get_new_labels)"
 
 let get_labels = get_new_labels empty_label_set
 
@@ -354,6 +359,7 @@ let rec subst expr value value' =
     in Record (Util.Pmap.fold reconstruct_fields Util.Pmap.empty fields)
   )
   | Projection (expr, id) -> Projection (subst expr value value', id)
+  | Match _ -> failwith "Match expression are not yet supported (subst)"
 
 let subst_var expr id = subst expr (Var id)
 
@@ -401,6 +407,7 @@ let rec rename expr renam =
     in Record (Util.Pmap.fold reconstruct_fields Util.Pmap.empty fields)
   )
   | Projection (expr, id) -> Projection (rename expr renam, id)
+  | Match _ -> failwith "Match expression are not yet supported (rename)"
 (* Auxiliary functions *)
 
 let implement_arith_op = function
@@ -526,6 +533,7 @@ let rec extract_ctx expr =
         let updated_fields = Util.Pmap.modadd (field_name, ctx) fields in
         (res, Record updated_fields)
   )
+  | Match _ -> failwith "Match expression are not yet supported (extract_ctx)"
 
 and extract_ctx_bin cons_op expr1 expr2 =
   match (isval expr1, isval expr2) with

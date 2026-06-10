@@ -14,7 +14,7 @@ type label = LocL of loc | ConsL of constructor | SymL of Symbolic.id [@@derivin
 
 val fresh_evar : unit -> id
 
-type pattern = PatCons of constructor * id | PatVar of id
+type pattern = PatCons of constructor * id option | PatVar of id
 
 type binary_op =
   | Plus
@@ -63,6 +63,7 @@ and term =
   | Assert of term
   | Raise of term
   | TryWith of (term * handler list)
+  | Match of (term * handler list)
   | Hole
   | Error
 

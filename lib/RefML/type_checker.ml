@@ -354,6 +354,7 @@ let rec infer_type type_ctx type_subst expr =
   | Error ->
       let tvar = fresh_typevar () in
       (tvar, type_subst)
+  | Match _ -> failwith "Match expression are not yet supported (infer_type)"
 and check_type type_ctx type_subst expr res_ty =
   let (ty, type_subst') = infer_type type_ctx type_subst expr in
   let ty_inst = Types.apply_type_subst ty type_subst' in

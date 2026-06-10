@@ -296,8 +296,9 @@ let interpreter interpreter expr : value SymbolicEvalState.m =
               | Handler (pat, expr_pat) :: rest ->
                   begin
                     match pat with
-                    | PatCons (c', id) when c = c' ->
+                    | PatCons (c', Some id) when c = c' ->
                         interpreter (subst_var expr_pat id nf)
+                    | PatCons (_, None) -> failwith "empty PatCons not implemented yet"
                     | PatCons _ ->
                         aux rest
                     | PatVar id ->
