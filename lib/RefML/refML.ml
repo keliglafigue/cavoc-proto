@@ -1,3 +1,15 @@
+(**
+  This module contains the main implementations of the {e RefML}
+  {{!page-index.machinelanguages}machine language}.
+
+  Two implementations of {e RefML} are provided:
+    - A {{!module: WithAValConcrete}concrete} {e RefML} implementation ;
+    - A {{!module: WithAValSymbolic}symbolic} {e RefML} implementation based on
+    symbolic execution.
+
+  See {!module: Lang.Language} for more details about machine languages.
+ *)
+
 module Names : Lang.Names.NAMES with type name = Names.name = struct
   include Names
 end
@@ -48,6 +60,13 @@ let parse_and_handle_error parser_entry lexbuf =
     | Parser.Error ->
         failwith (format_msg ("Parsing Error"))
 
+(**
+  [MakeCompBase] contains most of the code needed to implement a
+  {{!page-index.machinelanguages}machine language} based on {e RefML}.
+  Note that it doesn't directly implement any of the signatures from
+  {!module: Lang.Language} as it lacks the machinery related to evaluation
+  and generation of abstract values.
+ *)
 module MakeCompBase (BranchMonad : Util.Monad.BRANCH) = struct
   include Syntax
   include Typed

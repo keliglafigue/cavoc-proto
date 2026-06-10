@@ -1,10 +1,27 @@
+(**
+  [Nup] contains the infrastructure needed to implement the
+  {!module-type: Lang.Abstract_val.AVAL} signature.
+*)
+
 open Syntax
 
+(**
+  The {!module-type: GENERATE_VALUE} signature is implemented by modules providing a
+  strategy to generate {e RefML} values. Such modules are used to instanciate
+  the {!module: Make} functor.
+ *)
 module type GENERATE_VALUE = sig
   module BranchMonad : Util.Monad.BRANCH
 
   val generate_bool : Store.Storectx.t -> (value * Store.Storectx.t) BranchMonad.m
 end
+
+(**
+  Currently, two strategies are provided:
+    - {!module: MakeGenerateConcreteValue}, which generates concrete values ;
+    - {!module: MakeGenerateSymbolicValue}, which generates symbolic variables
+    instead of concrete booleans and adds these variables to the [storectx].
+ *)
 
 module MakeGenerateSymbolicValue (BranchMonad : Util.Monad.BRANCH) = struct
   module BranchMonad = BranchMonad
