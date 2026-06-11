@@ -25,13 +25,11 @@ let string_of_signature signature =
 
 type implem_decl =
   | TypeDecl of (Types.id * Types.typ)
-  | AlgebraicTypeDecl of (Types.id * (Syntax.id, Types.typ option) Util.Pmap.pmap)
   | ValDecl of (Syntax.id * Syntax.term)
   | ExnDecl of (Syntax.constructor * Types.typ option)
 
 let string_of_implem_decl = function
   | TypeDecl (tid, ty) -> "type " ^ tid ^ " = " ^ Types.string_of_typ ty
-  | AlgebraicTypeDecl _ -> failwith "Algebraic type decl nto implemented yet (string_of_implem_decl)"
   | ValDecl (var, term) -> " let " ^ var ^ " = " ^ Syntax.string_of_term term
   | ExnDecl (c, None) -> "Exception " ^ Syntax.string_of_constructor c
   | ExnDecl (c, Some param_ty) ->
@@ -55,7 +53,6 @@ let split_implem_decl_list implem_decl_l =
     | [] -> (val_decl_l, type_decl_l, exn_l)
     | TypeDecl td :: implem_decl_l' ->
         aux (val_decl_l, td :: type_decl_l, exn_l) implem_decl_l'
-    | AlgebraicTypeDecl _::_ -> failwith "Algebraic type decl nto implemented yet (split_implec_decl_list)"
     | ValDecl vd :: implem_decl_l' ->
         aux (vd :: val_decl_l, type_decl_l, exn_l) implem_decl_l'
     | ExnDecl (c, ty_opt) :: implem_decl_l' ->

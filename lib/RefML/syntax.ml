@@ -91,7 +91,7 @@ and term =
 
 let pp_pattern fmt = function
   | PatCons (c, Some id) -> Format.fprintf fmt "%s %s" c id
-  | PatCons (_, None) -> failwith "Empty PatCons not implemented yet (pp_pattern)"
+  | PatCons (c, None) -> Format.fprintf fmt "%s" c 
   | PatVar id -> Format.pp_print_string fmt id
 
 let pp_typed_var fmt = function
@@ -126,7 +126,7 @@ let rec pp_par_term fmt = function
 and pp_term fmt = function
   | Var x -> pp_id fmt x
   | Constructor (c, Some e) -> Format.fprintf fmt "%a %a" pp_constructor c pp_term e
-  | Constructor (_c, None) -> failwith "Empty constructor not implemented yet (pp_term)"
+  | Constructor (c, None) -> Format.fprintf fmt "%a" pp_constructor c
   | Name n -> Names.pp_name fmt n
   | Loc l -> pp_loc fmt l
   | Symbolic id -> Symbolic.pp_constraint fmt id
@@ -163,6 +163,10 @@ and pp_term fmt = function
       let pp_sep fmt () = Format.pp_print_string fmt "|" in
       let pp_handler_l = Format.pp_print_list ~pp_sep pp_handler in
       Format.fprintf fmt "try %a with %a" pp_term e pp_handler_l handler_l
+  | Match (e, handler_l) -> 
+      let pp_sep fmt () = Format.pp_print_string fmt "|" in
+      let pp_handler_l = Format.pp_print_list ~pp_sep pp_handler in
+      Format.fprintf fmt "match %a with %a" pp_term e pp_handler_l handler_l
   | Hole -> Format.pp_print_string fmt "∙"
   | Error -> Format.pp_print_string fmt "error"
   | Record elt -> (
@@ -171,7 +175,6 @@ and pp_term fmt = function
     Format.pp_print_string fmt "}";
   )
   | Projection (e, v) -> Format.fprintf fmt "%a.%s" pp_par_term e v
-  | Match _ -> failwith "Match expression are not yet supported (pp_term)"
 
 and pp_handler fmt (Handler (pat, expr)) =
   Format.fprintf fmt "%a -> %a" pp_pattern pat pp_term expr
