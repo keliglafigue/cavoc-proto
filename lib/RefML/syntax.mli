@@ -39,7 +39,7 @@ and term =
   | Constructor of constructor * term option
   | Name of Names.name
   | Loc of loc
-  (* This constructor embeds a symbolic expression into a RefML expression *)
+  (** [Symbolic] embeds a symbolic expression into a RefML expression *)
   | Symbolic of Symbolic.symbolic_expr
   | Unit
   | Int of int
@@ -74,7 +74,7 @@ type name_set = Names.name list
 
 val empty_name_set : name_set
 
-(* get_new_name s t collects all the names appearing in the term t, and add them to s.
+(** get_new_name s t collects all the names appearing in the term t, and add them to s.
 It guarantee that each new name is added only once in s, unless it was already in s in which case it is not added.*)
 val get_new_names : name_set -> term -> name_set
 val get_names : term -> name_set
@@ -91,7 +91,7 @@ val pp_value : Format.formatter -> value -> unit
 val string_of_value : value -> string
 val isval : term -> bool
 
-(* The following function subst expr value value 'can be used to substitue any occurence of
+(** The following function subst expr value value 'can be used to substitue any occurence of
    value by value' in expr. The second argument value can either be a variable, a Names.name, a location or the Hole.*)
 val subst : term -> value -> value -> term
 val subst_var : term -> id -> value -> term

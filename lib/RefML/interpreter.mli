@@ -1,4 +1,4 @@
-(* This file provides a definitional interpreter for RefML *)
+(** This module provides a definitional interpreter for RefML *)
 
 type opconf = Syntax.term * Store.store
 

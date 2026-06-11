@@ -6,6 +6,10 @@ type opconf = Syntax.term * store
 let string_of_opconf (expr, store) =
   "(" ^ string_of_term expr ^ " | " ^ Store.string_of_store store ^ ")"
 
+(**
+  The monad used by the interpreter. It is a branching monad with state
+  local to each branch.
+ *)
 module SymbolicEvalState = struct
     (* The state monad already emulates lazy evaluation of branches *)
     type 'a m =  store -> ('a * store) list
@@ -49,6 +53,10 @@ module SymbolicEvalState = struct
     let fail () =
       fun _ -> []
 
+    (**
+      select computation t and/or f depending on the satisfiability of
+      k/not k.
+     *)
     let branch k t f : 'a m =
       let set_store store = fun _ -> [ (), store ] in
 

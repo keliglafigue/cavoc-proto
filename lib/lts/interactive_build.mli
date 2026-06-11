@@ -1,9 +1,29 @@
-module type IBUILD = sig
-  (* To be instanciated *)
-  module M : Util.Monad.MONAD
+(**
+  The [Interactive_build] module contains the main interaction loop of the
+  prototype.
+ *)
 
+module type IBUILD = sig
+  (**
+    [M] is the monad used to interact with the user. The backend does not
+    impose any restriction on this monad, it is only here because it could
+    be needed by some of the callbacks passed to {!val: interactive_build}. 
+   *)
+  module M : Util.Monad.MONAD
+  
   type conf
 
+  (**
+    [interactive_build] starts the interaction loop. The environment is
+    expected to provide callbacks to be called at different stages of the
+    interaction.
+
+    @param show_move display a textual representation of the move after each turn.
+    @param show_conf display the current configuration after each turn
+    @param show_moves_list display the list of possibles moves when it's the user's
+    turn.
+    @param get_move returns the move choosen by the user
+   *)
   val interactive_build :
     show_move:(string -> unit) ->
     show_conf:(Yojson.Safe.t -> unit) ->
@@ -15,8 +35,18 @@ module type IBUILD = sig
     unit M.m
 end
 
-(* This module type is used by interactive_build to signify that it accepts any
-   LTS, provided that the LTS is capable of resolving non-determinism by itself *)
+(**
+  [RUN_LTS] is used by {!module: Make} to signify that it accepts any
+  {{!module-type: Strategy.LTS}LTS}, provided that the LTS is capable of resolving
+  non-determinism caused by an interpreter returning multiple
+  {{!type: Strategy.LTS.passive_conf}passive configurations}.
+
+  Since resolving non-determinism may require some action of the user, the
+  monad {!module: RUN_LTS.M} is required.
+
+  See {!val: Strategy.LTS.p_trans}
+  See {!module: IBUILD.M}
+ *)
 module type RUN_LTS = sig
   include Strategy.LTS
 
