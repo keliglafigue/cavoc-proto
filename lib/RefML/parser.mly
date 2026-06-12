@@ -181,26 +181,23 @@ list_ident :
   | l=list_ident tid=typed_ident {tid::l}
 
 atomic_ty:
-  | v=TVAR          { TVar v }
-  | v=VAR          { TId v }
-  | TUNIT        { TUnit }
-  | TBOOL        { TBool }
-  | TINT         { TInt }
+  | v=TVAR        { TVar v }
+  | v=VAR         { TId v }
+  | TUNIT         { TUnit }
+  | TBOOL         { TBool }
+  | TINT          { TInt }
   | LPAR t=arrow_ty RPAR { t }
   | LBRACE r=t_record RBRACE { TRecord (Util.Pmap.list_to_pmap r) }
+  | REF t=atomic_ty { TRef t }
   | TEXN  { TExn }
 
 t_record:
-  | v=VAR COLON t=ty  { [(v, t)] }
-  | r=t_record SEMICOLON v=VAR COLON t=ty { (v,t)::r }
-
-ref_ty:
-  | t = atomic_ty { t }
-  | REF t=ref_ty  { TRef t}
+  | v=VAR COLON t=arrow_ty  { [(v, t)] }
+  | r=t_record SEMICOLON v=VAR COLON t=arrow_ty { (v,t)::r }
 
 prod_ty:
-  | t=ref_ty { t }
-  | t1=prod_ty MULT t2=ref_ty { TProd (t1, t2) }
+  | t=atomic_ty { t }
+  | t1=prod_ty MULT t2=atomic_ty { TProd (t1, t2) }
 
 arrow_ty:
   | t=prod_ty { t }
