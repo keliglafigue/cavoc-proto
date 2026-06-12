@@ -50,7 +50,12 @@ let rec pp_typ fmt = function
     Util.Pmap.iter (fun (id, ty) -> Format.fprintf fmt "%s : %a; " id pp_par_typ ty) ty;
     Format.pp_print_string fmt "}"
   )
-  | TAlgebraic _ -> failwith "Algebraic type are not yet supported (pp_typ)"
+  | TAlgebraic cons_list ->
+      let pp_typ_option fmt ty = match ty with 
+        | None -> Format.fprintf fmt ""
+        | Some ty -> Format.fprintf fmt "of %a" pp_par_typ ty
+      in 
+      Util.Pmap.iter (fun (cons, ty) -> Format.fprintf fmt "| %s %a" cons pp_typ_option ty) cons_list
 
 and pp_par_typ fmt = function
   | TArrow (ty1, ty2) ->
